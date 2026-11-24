@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageLayout from '../../components/shell/PageLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import AddressAvatar from '../../components/ui/AddressAvatar.astro';
+import Alert from '../../components/ui/Alert.astro';
+import Skeleton from '../../components/ui/Skeleton.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+---
+
+<Layout title="Dev account">
+  <PageLayout>
+    <div x-data="devAccountPage" class="mx-auto max-w-md space-y-6 py-8">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-fg">Choose a dev account</h1>
+        <p class="mt-2 text-sm text-fg-muted">
+          On the local development chain the app signs as one of the well-known test accounts. Switch accounts to act
+          as a second person.
+        </p>
+      </div>
+
+      <template x-if="!local">
+        <EmptyState
+          title="Dev accounts are for the local chain"
+          description="This build talks to a public network, where you act as your own account."
+          icon="shield"
+        />
+      </template>
+      <template x-if="local && $store.wallet.mode === 'host-required'">
+        <EmptyState
+          title="Open in the Polkadot app"
+          description="Dev accounts sign through the host. Open this app in Polkadot Desktop."
+          icon="smartphone"
+        />
+      </template>
+      <template x-if="local && $store.wallet.mode !== 'host-required' && accounts.length === 0">
+        <div class="space-y-2">
+          <Skeleton class="h-14 w-full" />
+          <Skeleton class="h-14 w-full" />
+          <Skeleton class="h-14 w-full" />
+        </div>
+      </template>
+
+      <ul x-show="local && accounts.length > 0" class="divide-y rounded-lg border bg-surface">
+        <template x-for="account in accounts" :key="account.name">
+          <li>
+            <button
+              type="button"
+              class="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2 disabled:opacity-60"
+              x-on:click="choose(account.name)"
+              x-bind:disabled="busy"
+            >
+              <AddressAvatar addressExpr="account.address" size={32} />
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium text-fg" x-text="account.name"></span>
+                <span class="block truncate font-mono text-xs text-fg-subtle" x-text="account.address"></span>
+              </span>
+              <span class="text-xs text-fg-muted" x-text="balances[account.address] ?? ''"></span>
+              <span
+                x-show="$store.wallet.username === account.name"
+                class="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-fg"
+                >Current</span
+              >
+            </button>
+          </li>
+        </template>
+      </ul>
+
+      <template x-if="error">
+        <Alert tone="danger"><span x-text="error"></span></Alert>
+      </template>
+
+      <p class="text-xs text-fg-subtle">
+        Uploads to Bulletin and live messages still use your product account on Paseo.
+      </p>
+
+      <Button href="/" x-bind:href="returnTo" variant="secondary" icon="chevron-left">Back</Button>
+    </div>
+  </PageLayout>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { returnPath } from '../../lib/faucet.js';
+  import { getChain } from '../../lib/chain.js';
+  import { formatBalance } from '../../lib/format.js';
+  import { walletStore } from '../../lib/stores.js';
+  import { LOCAL_TOKEN, usesDevAccounts } from '../../lib/wallet.js';
+
+  Alpine.data('devAccountPage', () => ({
+    busy: false,
+    error: '',
+    local: usesDevAccounts(),
+    /** @type {Record<string, string>} */
+    balances: {},
+    returnTo: returnPath(window.location.search),
+
+    get accounts() {
+      return walletStore()?.accounts ?? [];
+    },
+
+    init() {
+      if (!this.local) return;
+      this.$watch('accounts', () => this.loadBalances());
+      this.loadBalances();
+    },
+
+    async loadBalances() {
+      try {
+        const { api } = await getChain();
+        for (const account of this.accounts) {
+          const info = await api.query.System.Account.getValue(account.address);
+          this.balances[account.address] = formatBalance(info.data.free, ...LOCAL_TOKEN);
+        }
+      } catch {}
+    },
+
+    /** @param {string} name */
+    async choose(name) {
+      this.busy = true;
+      this.error = '';
+      try {
+        await walletStore()?.useDevAccount(name);
+        window.location.assign(this.returnTo);
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : String(err);
+      } finally {
+        this.busy = false;
+      }
+    },
+  }));
+</script>

@@ -10,7 +10,7 @@ import { SITE } from './site.js';
  * host hands the app a product account on load and signs on its behalf, through
  * `@parity/product-sdk-signer`'s `SignerManager`. On the local development chain the
  * phone cannot sign, so the app acts as a well-known dev account instead (mode `dev`),
- * chosen on `/dev-account/`.
+ * chosen on `/wallet/dev-account/`.
  *
  * @typedef {'detecting' | 'host' | 'dev' | 'host-required'} WalletMode
  *

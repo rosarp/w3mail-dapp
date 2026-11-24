@@ -11,8 +11,8 @@ import AddressAvatar from '../ui/AddressAvatar.astro';
 <div x-data class="contents">
   <template x-if="$store.wallet.isConnected && $store.wallet.mode === 'dev'">
     <a
-      href="/dev-account/"
-      x-bind:href="`/dev-account/?return=${encodeURIComponent(location.pathname + location.search)}`"
+      href="/wallet/dev-account/"
+      x-bind:href="`/wallet/dev-account/?return=${encodeURIComponent(location.pathname + location.search)}`"
       class="flex items-center gap-2 rounded-full border border-warning bg-surface-2 py-1 pr-3 pl-1 hover:bg-surface-3"
       :title="$store.wallet.address"
     >
