@@ -30,3 +30,7 @@ test-results/
 # the run lock name local paths. Handoffs are the build's record and are kept.
 .dapp-factory/*
 !.dapp-factory/handoffs/
+
+# Publish output
+dist.car
+.dot-deploy.json
