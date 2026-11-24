@@ -47,7 +47,13 @@ describe('deriveKeyPair', () => {
     await deriveKeyPair('mail:x25519:v1:0xaa');
     await deriveKeyPair('mail:x25519:v1:0xaa');
     expect(host.derive).toHaveBeenCalledTimes(1);
-    expect(host.derive).toHaveBeenCalledWith(utf8ToBytes('mail:x25519:v1:0xaa'));
+    expect(host.derive).toHaveBeenCalledWith(sha256(utf8ToBytes('mail:x25519:v1:0xaa')));
+  });
+
+  it('gives the host a 32-byte key however long the context', async () => {
+    await deriveKeyPair(`w3mail:x25519:v1:0x${'ab'.repeat(20)}`);
+    const [key] = host.derive.mock.calls[0];
+    expect(key).toHaveLength(32);
   });
 
   it('hashes entropy that is not 32 bytes', async () => {

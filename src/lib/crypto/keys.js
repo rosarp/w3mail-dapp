@@ -10,7 +10,8 @@ const cache = new Map();
 /**
  * A stable X25519 keypair for this user and product, derived by the host from
  * `context`. The host derives per wallet, not per account, so a context names the
- * account it is for: `<app>:x25519:v1:<h160>`. In design preview the pair is random.
+ * account it is for: `<app>:x25519:v1:<h160>`. The host takes a key of at most 32 bytes,
+ * so it is given the context's SHA-256. In design preview the pair is random.
  *
  * @param {string} context
  * @returns {Promise<KeyPair>}
@@ -20,7 +21,7 @@ export async function deriveKeyPair(context) {
   if (cached) return cached;
   if (isDesignPreview()) return remember(context, nacl.box.keyPair());
   if (!isInHost()) throw new Error('Keys need the Polkadot host');
-  const result = await deriveEntropy(utf8ToBytes(context));
+  const result = await deriveEntropy(sha256(utf8ToBytes(context)));
   if (result.ok === false) throw new Error(`The host could not derive a key: ${result.error.message}`);
   const seed = result.value.length === 32 ? result.value : sha256(result.value);
   return remember(context, nacl.box.keyPair.fromSecretKey(seed));
