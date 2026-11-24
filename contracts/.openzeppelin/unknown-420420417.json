@@ -1,0 +1,247 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xB4d40f9eef08eeF3E9AD7336854eC27c018d09e7",
+      "txHash": "0xab4a5f8eb358688a01a3ce48f0165f461d8839de000878d882754534e77241c6",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "de17e86df16f25f015a17d60d92681575968b022c0884110ff7d375de5894dbc": {
+      "address": "0x332d8A211A4D3b9553714B01e83F1E5847e0C00B",
+      "txHash": "0x8a1c6dc3afb946a1dafbf2759397ba0e0120d568f61d166cb0403c8c5f835663",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "messageCids",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_array(t_bytes32)dyn_storage)",
+            "contract": "MailboxIndex",
+            "src": "contracts/MailboxIndex.sol:13"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "MailboxIndex",
+            "src": "contracts/MailboxIndex.sol:63"
+          },
+          {
+            "label": "pubKeyRegistry",
+            "offset": 0,
+            "slot": "50",
+            "type": "t_contract(PubKeyRegistry)2342",
+            "contract": "W3bMailRouter",
+            "src": "contracts/W3bMailRouter.sol:46"
+          },
+          {
+            "label": "maxInboxSize",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_uint256",
+            "contract": "W3bMailRouter",
+            "src": "contracts/W3bMailRouter.sol:49"
+          },
+          {
+            "label": "inbox",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_mapping(t_address,t_array(t_struct(EmailMetadata)2415_storage)dyn_storage)",
+            "contract": "W3bMailRouter",
+            "src": "contracts/W3bMailRouter.sol:61"
+          },
+          {
+            "label": "sent",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_mapping(t_address,t_array(t_struct(EmailMetadata)2415_storage)dyn_storage)",
+            "contract": "W3bMailRouter",
+            "src": "contracts/W3bMailRouter.sol:63"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)24_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)34_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)370_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)24_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(EmailMetadata)2415_storage)dyn_storage": {
+            "label": "struct W3bMailRouter.EmailMetadata[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_contract(PubKeyRegistry)2342": {
+            "label": "contract PubKeyRegistry",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_bytes32)dyn_storage)": {
+            "label": "mapping(address => bytes32[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(EmailMetadata)2415_storage)dyn_storage)": {
+            "label": "mapping(address => struct W3bMailRouter.EmailMetadata[])",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(EmailMetadata)2415_storage": {
+            "label": "struct W3bMailRouter.EmailMetadata",
+            "members": [
+              {
+                "label": "sender",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "receiver",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "messageCid",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "msgId",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "deleted",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
