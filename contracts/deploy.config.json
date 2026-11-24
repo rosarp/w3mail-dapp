@@ -1,0 +1,6 @@
+{
+  "contracts": [
+    { "name": "PubKeyRegistry" },
+    { "name": "W3bMailRouter", "proxy": "uups", "initializer": "initialize", "args": ["$PubKeyRegistry", 10000] }
+  ]
+}
