@@ -1,0 +1,73 @@
+---
+/**
+ * Inline trend line for stat values, table cells and list rows. Coloured by direction
+ * (success up, danger down) unless a `text-*` class overrides it. Below two points it
+ * draws a quiet dashed baseline, never an empty box.
+ *
+ *   <Sparkline data={[4, 6, 5, 9]} />            drawn at build time
+ *   <Sparkline data="$store.pool.prices" />      redrawn by Alpine
+ *
+ * @typedef {object} Props
+ * @property {number[] | string} data  Chronological values, or an Alpine expression for them.
+ * @property {number} [width]  Default 96.
+ * @property {number} [height]  Default 28.
+ * @property {number} [strokeWidth]  Default 1.5.
+ * @property {boolean} [filled]  Gradient under the line, default true.
+ * @property {string} [label]  Accessible name; defaults to the trend direction.
+ * @property {string} [class]
+ */
+import { lineGeometry } from '../../lib/charts.js';
+
+const { data, width = 96, height = 28, strokeWidth = 1.5, filled = true, label, class: className = '' } = Astro.props;
+
+const live = typeof data === 'string';
+const values = live ? [] : data;
+const geometry = live ? null : lineGeometry(values, width, height, { padX: strokeWidth, padY: strokeWidth });
+const up = values.length > 1 && values[values.length - 1] >= values[0];
+const tone = live || className ? '' : geometry ? (up ? 'text-success' : 'text-danger') : 'text-fg-subtle';
+const source = live ? `() => (${data})` : JSON.stringify(values);
+const gradient = `spark-${Math.random().toString(36).slice(2, 10)}`;
+---
+
+<svg
+  width={width}
+  height={height}
+  class:list={[tone, className]}
+  role="img"
+  aria-label={label ?? (geometry ? `Trend ${up ? 'up' : 'down'}` : 'No trend data yet')}
+  x-data={`sparkline(${source}, ${JSON.stringify({ width, height, pad: strokeWidth })})`}
+  x-bind:class={className ? undefined : 'tone'}
+  x-bind:aria-label={label ? undefined : 'ariaLabel'}
+>
+  <line
+    x1="0"
+    y1={height / 2}
+    x2={width}
+    y2={height / 2}
+    stroke="currentColor"
+    stroke-dasharray="3 3"
+    opacity="0.5"
+    style={geometry ? 'display: none;' : undefined}
+    x-show="!geometry"
+  />
+  {filled && (
+    <>
+      <defs>
+        <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.25" />
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={geometry?.area ?? ''} x-bind:d="geometry?.area ?? ''" fill={`url(#${gradient})`} />
+    </>
+  )}
+  <path
+    d={geometry?.line ?? ''}
+    x-bind:d="geometry?.line ?? ''"
+    fill="none"
+    stroke="currentColor"
+    stroke-width={strokeWidth}
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

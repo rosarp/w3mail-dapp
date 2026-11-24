@@ -1,0 +1,44 @@
+---
+/**
+ * A small status label. Pair tone with text, never colour alone.
+ */
+/**
+ * @typedef {object} Props
+ * @property {'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info'} [tone]
+ * @property {'sm' | 'md'} [size]
+ * @property {boolean} [pill]  Fully rounded.
+ * @property {boolean} [dot]  Leading status dot.
+ * @property {string} [class]
+ * @property {unknown} [key] Extra attributes are spread onto the root element.
+ */
+
+const { tone = 'neutral', size = 'sm', pill = false, dot = false, class: className, ...rest } = Astro.props;
+
+const tones = {
+  neutral: 'bg-surface-2 text-fg-muted ring-border',
+  primary: 'bg-primary-soft text-primary ring-primary/20',
+  success: 'bg-success-soft text-success ring-success/20',
+  warning: 'bg-warning-soft text-warning ring-warning/25',
+  danger: 'bg-danger-soft text-danger ring-danger/20',
+  info: 'bg-info-soft text-info ring-info/20',
+};
+
+const sizes = {
+  sm: 'px-2 py-0.5 text-xs',
+  md: 'px-2.5 py-1 text-sm',
+};
+---
+
+<span
+  class:list={[
+    'inline-flex items-center gap-1.5 font-medium ring-1 ring-inset',
+    pill ? 'rounded-full' : 'rounded-md',
+    tones[tone],
+    sizes[size],
+    className,
+  ]}
+  {...rest}
+>
+  {dot && <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />}
+  <slot />
+</span>

@@ -1,0 +1,108 @@
+---
+/**
+ * Full-width area chart with a gradient fill and a hover readout — the primary metric
+ * of a dashboard. Below two points it shows a designed "not enough data" state; never
+ * seed data to fill it.
+ *
+ *   <AreaChart data={[{ label: 'Mon', value: 3 }, …]} />             drawn at build time
+ *   <AreaChart data="$store.market.history" format="formatCompact" />  redrawn by Alpine
+ *
+ * @typedef {object} Point
+ * @property {string} label  X label shown on the axis and in the readout.
+ * @property {number} value
+ *
+ * @typedef {object} Props
+ * @property {Point[] | string} data  Points, or an Alpine expression that evaluates to points.
+ * @property {number} [height]  Pixel height of the plot, default 220.
+ * @property {string} [format]  Name of a `lib/format.js` export for values.
+ * @property {boolean} [showXLabels]  First / middle / last labels under the plot, default true.
+ * @property {string} [label]  Accessible name.
+ * @property {string} [class]  Colour comes from `text-*`; defaults to text-primary.
+ */
+import { lineGeometry } from '../../lib/charts.js';
+
+const { data, height = 220, format, showXLabels = true, label = 'Area chart', class: className = '' } = Astro.props;
+
+const W = 600;
+const H = 200;
+const live = typeof data === 'string';
+const points = live ? [] : data;
+const geometry = live ? null : lineGeometry(points.map((p) => p.value), W, H, { padY: 8 });
+const source = live ? `() => (${data})` : JSON.stringify(points);
+const gradient = `area-${Math.random().toString(36).slice(2, 10)}`;
+const mid = points[Math.floor((points.length - 1) / 2)];
+---
+
+<div
+  class:list={['relative w-full text-primary', className]}
+  x-data={`areaChart(${source}, ${JSON.stringify({ format: format ?? null, width: W, height: H })})`}
+>
+  <div
+    class="flex items-center justify-center rounded-xl border border-dashed border-border text-sm text-fg-subtle"
+    style={`height: ${height}px;${geometry || live ? ' display: none;' : ''}`}
+    x-show="!geometry"
+  >
+    Not enough data to chart yet
+  </div>
+  <div style={geometry ? undefined : 'display: none;'} x-show="geometry">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      class="block w-full"
+      style={`height: ${height}px`}
+      role="img"
+      aria-label={label}
+      x-on:mousemove="hoverAt($event)"
+      x-on:mouseleave="hover = null"
+    >
+      <defs>
+        <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.22" />
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map((f) => (
+        <line x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--chart-grid)" vector-effect="non-scaling-stroke" />
+      ))}
+      <path d={geometry?.area ?? ''} x-bind:d="geometry?.area ?? ''" fill={`url(#${gradient})`} />
+      <path
+        d={geometry?.line ?? ''}
+        x-bind:d="geometry?.line ?? ''"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      />
+      <g x-show="hoverPoint" style="display: none;">
+        <line
+          y1="0"
+          y2={H}
+          x-bind:x1="hoverPoint?.x ?? 0"
+          x-bind:x2="hoverPoint?.x ?? 0"
+          stroke="currentColor"
+          stroke-opacity="0.3"
+          vector-effect="non-scaling-stroke"
+        />
+        <circle r="4" fill="currentColor" x-bind:cx="hoverPoint?.x ?? 0" x-bind:cy="hoverPoint?.y ?? 0" />
+      </g>
+    </svg>
+    <div
+      class="pointer-events-none absolute top-1 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border bg-surface px-2.5 py-1.5 text-sm shadow-md"
+      style="display: none;"
+      x-show="hoverPoint"
+      x-bind:style="{ left: hoverLeft }"
+    >
+      <span class="font-semibold tabular text-fg" x-text="hoverValue"></span>
+      <span class="ml-1.5 text-fg-subtle" x-text="hoverLabel"></span>
+    </div>
+    {showXLabels && (
+      <div class="mt-1 flex justify-between text-xs text-fg-subtle">
+        <span x-text="series[0]?.label ?? ''">{points[0]?.label}</span>
+        <span x-show="series.length > 2" x-text="series[Math.floor((series.length - 1) / 2)]?.label ?? ''">{points.length > 2 ? mid?.label : ''}</span>
+        <span x-text="series[series.length - 1]?.label ?? ''">{points[points.length - 1]?.label}</span>
+      </div>
+    )}
+  </div>
+</div>

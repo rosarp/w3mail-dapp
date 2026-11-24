@@ -1,0 +1,49 @@
+---
+/**
+ * Avatar and human name for a person — the only way a generated app shows who
+ * someone is. The name resolves to an explicit name, else "You" for the viewer, else
+ * a stable pseudonym; never a raw address.
+ *
+ * Every `*Expr` prop is an Alpine expression; the plain props are fixed values.
+ *
+ *   <IdentityChip addressExpr="post.author" nameExpr="post.authorName" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [address]
+ * @property {string} [addressExpr]
+ * @property {string} [name]
+ * @property {string} [nameExpr]
+ * @property {string} [selfExpr]  The viewer's address; default `$store.wallet.address`.
+ * @property {import('../../lib/identity.js').PseudonymWords} [words]  Themed pseudonym word lists.
+ * @property {string} [href]  Make the chip a link.
+ * @property {'sm' | 'md'} [size]
+ * @property {string} [class]
+ */
+import AddressAvatar from './AddressAvatar.astro';
+
+const {
+  address = '',
+  addressExpr,
+  name,
+  nameExpr,
+  selfExpr = '$store.wallet?.address',
+  words = {},
+  href,
+  size = 'sm',
+  class: className,
+} = Astro.props;
+
+const readAddress = addressExpr ?? JSON.stringify(address);
+const readName = nameExpr ?? JSON.stringify(name ?? null);
+const Tag = href ? 'a' : 'span';
+---
+
+<Tag
+  href={href}
+  x-data={`identityChip(() => ${readAddress}, () => ${readName}, () => ${selfExpr}, ${JSON.stringify(words)})`}
+  class:list={['inline-flex max-w-full items-center gap-2', href && 'transition-opacity hover:opacity-80', className]}
+>
+  <AddressAvatar addressExpr="address" size={size === 'md' ? 28 : 20} />
+  <span class:list={['truncate font-medium text-fg', size === 'md' ? 'text-base' : 'text-sm']} x-text="label"></span>
+</Tag>

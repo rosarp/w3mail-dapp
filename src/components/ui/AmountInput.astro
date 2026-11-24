@@ -1,0 +1,84 @@
+---
+/**
+ * A decimals-aware amount field. `model` is an Alpine path kept in sync both ways
+ * with a bigint in smallest units, or null while empty or invalid — callers never
+ * multiply floats by 10^n. `maxExpr` (an Alpine expression yielding a bigint) adds a
+ * MAX button and an "exceeds balance" error.
+ *
+ *   <AmountInput label="Amount" model="form.amount" maxExpr="$store.wallet.balance" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [model]  Alpine path bound with x-model.
+ * @property {number} [decimals]  10 for PAS (default), 18 for EVM tokens.
+ * @property {string} [symbol]
+ * @property {string} [maxExpr]
+ * @property {string} [label]
+ * @property {string} [placeholder]
+ * @property {string} [id]
+ * @property {string} [name]
+ * @property {string} [class]
+ */
+
+const {
+  model,
+  decimals = 10,
+  symbol = 'PAS',
+  maxExpr,
+  label,
+  placeholder = '0.0',
+  id,
+  name,
+  class: className,
+} = Astro.props;
+
+const inputId = id ?? (name ? `field-${name}` : undefined);
+const modelAttrs = model ? { 'x-modelable': 'value', 'x-model': model } : {};
+const readMax = maxExpr ? `() => ${maxExpr}` : '() => null';
+---
+
+<div
+  x-data={`amountInput(${decimals}, ${readMax})`}
+  {...modelAttrs}
+  class:list={['grid gap-1.5', className]}
+>
+  {label && <label for={inputId} class="text-xs font-medium text-fg">{label}</label>}
+  <div
+    class="flex h-10 items-center gap-2 rounded-lg border bg-surface px-3 shadow-sm transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20"
+    x-bind:class="overMax ? 'border-danger' : 'border-border-strong/70'"
+  >
+    <input
+      id={inputId}
+      name={name}
+      inputmode="decimal"
+      autocomplete="off"
+      placeholder={placeholder}
+      aria-label={label ?? 'Amount'}
+      x-bind:aria-invalid="overMax || undefined"
+      x-bind:value="text"
+      x-on:input="onInput($el)"
+      class="min-w-0 flex-1 bg-transparent font-mono text-sm text-fg tabular outline-none placeholder:text-fg-subtle"
+    />
+    <span class="shrink-0 text-sm text-fg-subtle">{symbol}</span>
+    {
+      maxExpr && (
+        <button
+          type="button"
+          x-on:click="useMax()"
+          x-bind:disabled="max == null"
+          class="shrink-0 cursor-pointer rounded px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary-soft disabled:opacity-50"
+        >
+          MAX
+        </button>
+      )
+    }
+  </div>
+  {
+    maxExpr && (
+      <>
+        <p class="text-[11px] text-fg-subtle" x-show="!overMax && max != null" x-text={`'Balance: ' + formatMax(${JSON.stringify(symbol)})`}></p>
+        <p class="text-xs text-danger" role="alert" x-show="overMax" x-cloak>Exceeds balance</p>
+      </>
+    )
+  }
+</div>

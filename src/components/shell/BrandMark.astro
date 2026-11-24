@@ -1,0 +1,24 @@
+---
+/**
+ * The app's logomark, drawn in `currentColor` so it takes the brand colour from
+ * `text-primary`. The factory may replace this file with a generated mark.
+ *
+ * @typedef {object} Props
+ * @property {number} [size]
+ * @property {string} [class]
+ */
+
+const { size = 24, class: className } = Astro.props;
+---
+
+<svg
+  viewBox="0 0 64 64"
+  width={size}
+  height={size}
+  class:list={['shrink-0 text-primary', className]}
+  role="img"
+  aria-label="App logo"
+>
+  <circle cx="32" cy="32" r="20" fill="currentColor" opacity="0.9" />
+  <circle cx="44" cy="20" r="6" fill="currentColor" opacity="0.5" />
+</svg>

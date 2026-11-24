@@ -1,0 +1,214 @@
+@import "tailwindcss";
+@import "@fontsource/inter";
+
+/*
+ * `data-theme` is stamped on <html> before first paint by Layout.astro. Every colour
+ * is a semantic token; components never use raw palette values. The brand colour,
+ * font and radius are written by the factory from the spec at scaffold time.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f2f2ef;
+  --surface-3: #e9e8e4;
+  --overlay: rgb(11 11 11 / 0.45);
+
+  --fg: #111110;
+  --fg-muted: #52514e;
+  --fg-subtle: #898781;
+
+  --border: #e4e3de;
+  --border-strong: #c3c2b7;
+  --brand: #e6007a;
+  --ring: var(--brand);
+
+  --primary: var(--brand);
+  --primary-hover: color-mix(in oklab, var(--brand) 88%, black);
+  --primary-fg: #ffffff;
+  --primary-soft: color-mix(in oklab, var(--brand) 12%, white);
+
+  --success: #0b7a0b;
+  --success-soft: #e5f4e5;
+  --warning: #9a6400;
+  --warning-soft: #fdf3dc;
+  --danger: #c23434;
+  --danger-soft: #fbe9e9;
+  --info: #1f5fae;
+  --info-soft: #e6effb;
+
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-label: #6e6d68;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+
+  --shadow-sm: 0 1px 2px rgb(16 16 15 / 0.04), 0 1px 1px rgb(16 16 15 / 0.03);
+  --shadow-md: 0 4px 16px -4px rgb(16 16 15 / 0.08), 0 2px 4px rgb(16 16 15 / 0.04);
+  --shadow-lg: 0 24px 48px -12px rgb(16 16 15 / 0.18);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0e0e0d;
+  --surface: #171716;
+  --surface-2: #1f1f1d;
+  --surface-3: #2a2a27;
+  --overlay: rgb(0 0 0 / 0.6);
+
+  --fg: #f4f4f2;
+  --fg-muted: #c3c2b7;
+  --fg-subtle: #8f8d86;
+
+  --border: #2a2a28;
+  --border-strong: #3d3d39;
+  --ring: color-mix(in oklab, var(--brand) 80%, white);
+
+  --primary: color-mix(in oklab, var(--brand) 85%, white);
+  --primary-hover: color-mix(in oklab, var(--brand) 70%, white);
+  --primary-fg: #ffffff;
+  --primary-soft: color-mix(in oklab, var(--brand) 18%, black);
+
+  --success: #3dbb3d;
+  --success-soft: #13261a;
+  --warning: #f2b53a;
+  --warning-soft: #2c2412;
+  --danger: #ec6b6b;
+  --danger-soft: #2e1616;
+  --info: #6da7ec;
+  --info-soft: #16263a;
+
+  --chart-grid: #2c2c2a;
+  --chart-axis: #383835;
+  --chart-label: #9a9892;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+}
+
+@theme inline {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-overlay: var(--overlay);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --radius-md: calc(0.5rem * 0.75);
+  --radius-lg: 0.5rem;
+  --radius-xl: calc(0.5rem * 1.4);
+  --radius-2xl: calc(0.5rem * 2);
+
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-rise: rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in: slide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(16px); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-bg text-fg font-sans text-sm leading-6;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  *,
+  ::before,
+  ::after {
+    @apply border-border;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 25%, transparent);
+  }
+
+  [x-cloak] {
+    display: none !important;
+  }
+
+  .theme-switching,
+  .theme-switching * {
+    transition: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

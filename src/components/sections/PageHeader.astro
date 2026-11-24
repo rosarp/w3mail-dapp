@@ -1,0 +1,31 @@
+---
+/**
+ * Page or section header: optional eyebrow, a display title, a description and
+ * right-aligned actions in the default slot. Left-aligned by default — keep `center`
+ * for empty states and short marketing moments.
+ *
+ * @typedef {object} Props
+ * @property {string} title
+ * @property {string} [eyebrow]  Small label above the title.
+ * @property {string} [description]
+ * @property {'left' | 'center'} [align]  Default `left`.
+ * @property {string} [class]
+ */
+const { title, eyebrow, description, align = 'left', class: className = '' } = Astro.props;
+const center = align === 'center';
+---
+
+<header
+  class:list={[
+    'flex flex-col gap-4 md:flex-row md:items-end md:justify-between',
+    center && 'text-center md:flex-col md:items-center',
+    className,
+  ]}
+>
+  <div class:list={['max-w-prose', center && 'mx-auto']}>
+    {eyebrow && <p class="mb-2 text-xs font-medium tracking-wider text-primary uppercase">{eyebrow}</p>}
+    <h1 class="font-display text-3xl leading-tight font-semibold tracking-tight text-fg md:text-4xl">{title}</h1>
+    {description && <p class="mt-3 text-base text-fg-muted">{description}</p>}
+  </div>
+  {Astro.slots.has('default') && <div class="flex shrink-0 items-center gap-2"><slot /></div>}
+</header>

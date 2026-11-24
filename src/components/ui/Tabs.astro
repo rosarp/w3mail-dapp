@@ -1,0 +1,60 @@
+---
+/**
+ * Tabs with one named slot per tab:
+ *
+ *   <Tabs tabs={[{ id: 'open', label: 'Open' }, { id: 'closed', label: 'Closed' }]}>
+ *     <div slot="open">…</div>
+ *     <div slot="closed">…</div>
+ *   </Tabs>
+ *
+ * `stretch` makes the tab list fill its container, one equal column per tab.
+ */
+/**
+ * @typedef {object} Tab
+ * @property {string} id
+ * @property {string} label
+ *
+ * @typedef {object} Props
+ * @property {Tab[]} tabs
+ * @property {string} [active]  Initially selected tab id.
+ * @property {boolean} [stretch]
+ * @property {string} [class]
+ */
+
+const { tabs, active = tabs[0]?.id, stretch = false, class: className } = Astro.props;
+const panels = await Promise.all(tabs.map(async (t) => ({ ...t, html: await Astro.slots.render(t.id) })));
+---
+
+<div class={className} x-data={`{ tab: ${JSON.stringify(active)} }`}>
+  <div role="tablist" class:list={['gap-1 rounded-lg bg-surface-2 p-1', stretch ? 'flex' : 'inline-flex']}>
+    {
+      tabs.map((t) => (
+        <button
+          type="button"
+          role="tab"
+          class:list={[
+            'cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:text-fg',
+            'aria-selected:bg-surface aria-selected:text-fg aria-selected:shadow-sm',
+            stretch && 'flex-1',
+          ]}
+          aria-selected={t.id === active ? 'true' : 'false'}
+          x-bind:aria-selected={`(tab === ${JSON.stringify(t.id)}).toString()`}
+          x-on:click={`tab = ${JSON.stringify(t.id)}`}
+        >
+          {t.label}
+        </button>
+      ))
+    }
+  </div>
+  {
+    panels.map((p) => (
+      <div
+        role="tabpanel"
+        class="mt-4"
+        x-show={`tab === ${JSON.stringify(p.id)}`}
+        style={p.id === active ? undefined : 'display:none'}
+        set:html={p.html}
+      />
+    ))
+  }
+</div>

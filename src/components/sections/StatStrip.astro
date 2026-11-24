@@ -1,0 +1,35 @@
+---
+/**
+ * A row of two to four key metrics — large display values, muted labels. Gives a page
+ * density and hierarchy instead of more cards. A stat's `x` is an Alpine expression
+ * that replaces its static `value` at runtime.
+ *
+ *   <StatStrip stats={[{ label: 'Holders', value: '—', x: 'formatCompact($store.token.holders)' }]} />
+ *
+ * @typedef {object} Stat
+ * @property {string} label
+ * @property {string} [value]  Rendered at build time.
+ * @property {string} [x]  Alpine expression for the value, evaluated in the surrounding scope.
+ * @property {string} [hint]
+ * @property {string} [icon]  Lucide name.
+ *
+ * @typedef {object} Props
+ * @property {Stat[]} stats
+ * @property {boolean} [overlap]  Pull the strip up over the section above, e.g. under a hero.
+ * @property {string} [class]
+ */
+import Icon from '../ui/Icon.astro';
+
+const { stats, overlap = false, class: className = '' } = Astro.props;
+---
+
+<div class:list={['grid grid-cols-2 gap-4 md:grid-cols-4', overlap && 'relative z-10 -mt-12', className]}>
+  {stats.map((s, i) => (
+    <div class="animate-rise rounded-xl border bg-surface p-5 shadow-sm md:p-6" style={`animation-delay: ${i * 60}ms`}>
+      {s.icon && <div class="mb-2 text-primary"><Icon name={s.icon} class="size-5" /></div>}
+      <div class="font-display text-3xl leading-none font-semibold tabular text-fg" x-data={s.x ? "" : undefined} x-text={s.x}>{s.value}</div>
+      <div class="mt-2 text-xs tracking-wide text-fg-subtle uppercase">{s.label}</div>
+      {s.hint && <div class="mt-1 text-sm text-fg-muted">{s.hint}</div>}
+    </div>
+  ))}
+</div>

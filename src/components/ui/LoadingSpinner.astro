@@ -1,0 +1,16 @@
+---
+/**
+ * A spinner for short async actions. Use `Skeleton` for content that is loading.
+ */
+/**
+ * @typedef {object} Props
+ * @property {'sm' | 'md' | 'lg'} [size]
+ * @property {string} [class]
+ * @property {unknown} [key] Extra attributes are spread onto the root element.
+ */
+import LogoSpinner from './LogoSpinner.astro';
+
+const { size = 'md', class: className = 'text-primary', ...rest } = Astro.props;
+---
+
+<LogoSpinner size={size} class={className} {...rest} />

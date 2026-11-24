@@ -1,0 +1,43 @@
+---
+import AddressAvatar from '../ui/AddressAvatar.astro';
+/**
+ * A stacked row of everyone in a room right now, from live heartbeats.
+ *
+ *   <PresenceAvatars room="lobby" max={5} />
+ *
+ * Hidden outside a host with no peers; "only you here" when alone.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} room  Peers in the same room see each other.
+ * @property {number} [max]  Avatars shown before a "+N" chip.
+ * @property {string} [class]
+ */
+const { room, max = 5, class: className } = Astro.props;
+const args = JSON.stringify([room, max]).slice(1, -1);
+---
+
+<div x-data={`presenceAvatars(${args})`} x-show="count > 0 || isLive" x-cloak class={className}>
+  <div class="flex items-center gap-2" x-bind:role="count > 1 ? 'group' : null" x-bind:aria-label="count > 1 ? `${count} people here now` : null">
+    <span class="relative flex size-2" aria-hidden="true" x-show="isLive">
+      <span class="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-60"></span>
+      <span class="relative inline-flex size-2 rounded-full bg-success"></span>
+    </span>
+    <span class="text-xs text-fg-subtle" x-show="count <= 1">only you here</span>
+    <div class="flex items-center" x-show="count > 1">
+      <template x-for="(peer, index) in visible" x-bind:key="peer.id">
+        <span
+          class="animate-fade-in rounded-full ring-2 ring-surface"
+          x-bind:class="index > 0 && '-ml-2'"
+          x-bind:style="`z-index: ${visible.length - index}`"
+          x-bind:title="peer.label"
+        ><AddressAvatar addressExpr="peer.id" size={24} /></span>
+      </template>
+      <span
+        class="-ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border bg-surface px-1.5 text-xs font-medium text-fg-muted"
+        x-show="overflow > 0"
+        x-text="`+${overflow}`"
+      ></span>
+    </div>
+  </div>
+</div>

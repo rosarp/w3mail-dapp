@@ -1,0 +1,55 @@
+---
+/**
+ * Hero-grade metric for a hero's `media` slot: one large value with its trend. Feed it
+ * real chain data only; with too few points the chart shows its quiet empty state
+ * instead of a fake curve. Extra context goes in the `footer` slot.
+ *
+ *   <HeroMetricPanel label="Total staked" value="—" x="$store.pool.tvlText" seriesData="$store.pool.history" />
+ *
+ * @typedef {object} Props
+ * @property {string} label
+ * @property {string} [value]  Rendered at build time.
+ * @property {string} [x]  Alpine expression for the value, evaluated in the surrounding scope.
+ * @property {number[] | string} [series]  Values for a Sparkline, or an Alpine expression.
+ * @property {{ label: string, value: number }[] | string} [seriesData]  Labelled points for an AreaChart; wins over `series`.
+ * @property {string} [format]  Name of a `lib/format.js` export for chart readouts.
+ * @property {{ value: string, positive?: boolean }} [delta]  Change chip; danger-tinted when `positive` is false.
+ * @property {string} [hint]
+ * @property {string} [class]
+ */
+import AreaChart from '../ui/AreaChart.astro';
+import Sparkline from '../ui/Sparkline.astro';
+
+const { label, value, x, series, seriesData, format, delta, hint, class: className = '' } = Astro.props;
+---
+
+<div
+  class:list={['relative animate-rise overflow-hidden rounded-xl border bg-surface/90 p-6 shadow-sm backdrop-blur-sm md:p-8', className]}
+  x-data
+>
+  <div class="flex items-start justify-between gap-3">
+    <div class="text-xs tracking-wide text-fg-subtle uppercase">{label}</div>
+    {delta && (
+      <span
+        class:list={[
+          'inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium tabular',
+          delta.positive === false ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success',
+        ]}
+      >
+        {delta.value}
+      </span>
+    )}
+  </div>
+  <div class="mt-2 font-display text-4xl leading-none font-semibold tabular text-fg" x-text={x}>{value}</div>
+  {hint && <p class="mt-2 text-sm text-fg-subtle">{hint}</p>}
+
+  {seriesData ? (
+    <div class="mt-6"><AreaChart data={seriesData} height={140} format={format} label={`${label} history`} /></div>
+  ) : series ? (
+    <div class="mt-6"><Sparkline data={series} width={480} height={64} class="h-auto w-full text-primary" label={`${label} trend`} /></div>
+  ) : null}
+
+  {Astro.slots.has('footer') && (
+    <div class="mt-5 flex items-center gap-3 border-t pt-4 text-sm text-fg-muted"><slot name="footer" /></div>
+  )}
+</div>

@@ -1,0 +1,59 @@
+---
+/**
+ * Identicon, shortened address, copy button and optional explorer link — for places
+ * where the address itself is the point (a contract, a transaction counterparty).
+ * For people, use `IdentityChip`. `address` is fixed; `addressExpr` is an Alpine
+ * expression. Renders nothing while the address is empty.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [address]
+ * @property {string} [addressExpr]
+ * @property {boolean} [showAvatar]
+ * @property {boolean} [showCopy]
+ * @property {string} [explorerBaseUrl]  e.g. "https://blockscout-testnet.polkadot.io"; omit to hide the link.
+ * @property {number} [startLen]
+ * @property {number} [endLen]
+ * @property {string} [class]
+ */
+import AddressAvatar from './AddressAvatar.astro';
+import CopyButton from './CopyButton.astro';
+import Icon from './Icon.astro';
+
+const {
+  address = '',
+  addressExpr,
+  showAvatar = true,
+  showCopy = true,
+  explorerBaseUrl,
+  startLen = 6,
+  endLen = 4,
+  class: className,
+} = Astro.props;
+
+const read = addressExpr ?? JSON.stringify(address);
+const explorer = explorerBaseUrl?.replace(/\/$/, '');
+---
+
+<span
+  x-data={`addressDisplay(() => ${read}, ${startLen}, ${endLen})`}
+  x-show="address"
+  class:list={['inline-flex items-center gap-1.5 font-mono text-sm text-fg', className]}
+>
+  {showAvatar && <AddressAvatar addressExpr="address" size={20} />}
+  <span x-bind:title="address" x-text="short"></span>
+  {showCopy && <CopyButton valueExpr="address" class="px-1 text-fg-subtle hover:text-fg" iconClass="size-3.5" />}
+  {
+    explorer && (
+      <a
+        x-bind:href={`${JSON.stringify(explorer + '/address/')} + address`}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-fg-subtle transition-colors hover:text-primary"
+        aria-label="View address on block explorer"
+      >
+        <Icon name="external-link" class="size-3.5" />
+      </a>
+    )
+  }
+</span>

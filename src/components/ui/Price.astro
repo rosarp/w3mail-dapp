@@ -1,0 +1,47 @@
+---
+/**
+ * The one way a token amount appears. A bigint or numeric string is raw smallest
+ * units scaled by `decimals`; a number is already human and shown as-is. The
+ * denomination is a quiet suffix — copy never hand-types a ticker.
+ *
+ * `amount` is fixed; `amountExpr` is an Alpine expression.
+ *
+ *   Yours for <Price amountExpr="listing.price" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {bigint | string | number} [amount]
+ * @property {string} [amountExpr]
+ * @property {number} [decimals]  10 for PAS (default), 18 for EVM tokens.
+ * @property {string} [denom]
+ * @property {boolean} [hideDenom]
+ * @property {boolean} [compact]  12_400 → "12.4K".
+ * @property {string} [class]
+ */
+import { formatBalance, formatCompact } from '../../lib/format.js';
+
+const { amount = 0n, amountExpr, decimals = 10, denom = 'PAS', hideDenom = false, compact = false, class: className } = Astro.props;
+
+function display(value) {
+  if (typeof value === 'number') return compact ? formatCompact(value) : `${value}`;
+  let raw;
+  try {
+    raw = typeof value === 'bigint' ? value : BigInt(value ?? 0);
+  } catch {
+    raw = 0n;
+  }
+  const scaled = formatBalance(raw, decimals, '').trim();
+  return compact ? formatCompact(parseFloat(scaled)) : scaled;
+}
+---
+
+<span class:list={['inline-flex items-baseline gap-1 tabular text-fg', className]}>
+  {
+    amountExpr ? (
+      <span class="font-mono" x-data={`price(() => ${amountExpr}, ${decimals}, ${compact})`} x-text="text"></span>
+    ) : (
+      <span class="font-mono">{display(amount)}</span>
+    )
+  }
+  {!hideDenom && <span class="font-sans text-[0.7em] font-medium text-fg-subtle" aria-label={`denominated in ${denom}`}>{denom}</span>}
+</span>

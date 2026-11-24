@@ -1,0 +1,95 @@
+---
+/**
+ * A headline number. `value` is a fixed string; `valueExpr` is an Alpine expression
+ * for a figure that arrives at runtime. `countUp` animates a numeric `value` from zero
+ * when the card first renders.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} label
+ * @property {string} [value]
+ * @property {string} [valueExpr]
+ * @property {string} [suffix]
+ * @property {number} [delta]  Percent change vs the previous period, e.g. 12.4 or -3.1.
+ * @property {boolean} [invert]  A decrease is the good direction (churn, latency).
+ * @property {string} [hint]
+ * @property {string} [icon]  Lucide icon name.
+ * @property {boolean} [countUp]
+ * @property {string} [class]
+ */
+import Icon from './Icon.astro';
+
+const {
+  label,
+  value = '',
+  valueExpr,
+  suffix = '',
+  delta,
+  invert = false,
+  hint = 'vs last period',
+  icon,
+  countUp = false,
+  class: className,
+} = Astro.props;
+
+const up = delta !== undefined && delta >= 0;
+const good = invert ? !up : up;
+const target = parseFloat(String(value).replace(/,/g, ''));
+const animate = countUp && !valueExpr && Number.isFinite(target);
+
+const countUpData = `{
+  shown: 0,
+  init() {
+    const target = ${target};
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { this.shown = target; return; }
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min((now - start) / 1500, 1);
+      this.shown = Math.floor((1 - Math.pow(1 - p, 3)) * target);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+}`;
+---
+
+<div class:list={['rounded-xl border bg-surface p-5 shadow-sm', className]}>
+  <div class="flex items-center justify-between gap-2">
+    <p class="text-xs font-medium text-fg-muted">{label}</p>
+    {
+      icon && (
+        <span class="grid size-8 place-items-center rounded-lg bg-surface-2 text-primary">
+          <Icon name={icon} />
+        </span>
+      )
+    }
+  </div>
+  <p class="mt-2 text-2xl font-semibold tracking-tight text-fg tabular">
+    {
+      valueExpr ? (
+        <span x-data x-text={valueExpr}>—</span>
+      ) : animate ? (
+        <span x-data={countUpData} x-text="shown.toLocaleString()">{value}</span>
+      ) : (
+        <span>{value}</span>
+      )
+    }{suffix}
+  </p>
+  {
+    delta !== undefined && (
+      <p class="mt-1.5 flex items-center gap-1.5 text-xs">
+        <span
+          class:list={[
+            'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium tabular',
+            good ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger',
+          ]}
+        >
+          <Icon name={up ? 'arrow-up-right' : 'arrow-down-right'} class="size-3" />
+          <span class="sr-only">{up ? 'Up' : 'Down'}</span>
+          {Math.abs(delta).toFixed(1)}%
+        </span>
+        <span class="text-fg-subtle">{hint}</span>
+      </p>
+    )
+  }
+</div>

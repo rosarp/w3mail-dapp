@@ -1,0 +1,27 @@
+dist/
+.astro/
+node_modules/
+
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.env
+.env.local
+.env.production
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.sw?
+
+# Workflow files stay local until the user opts in.
+.github/workflows/
+
+# Scratch trees the engine retries a phase in.
+.dapp-factory/worktrees/

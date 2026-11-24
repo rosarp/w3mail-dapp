@@ -1,0 +1,15 @@
+---
+/**
+ * Asymmetric showcase grid. Fill it with `BentoItem`s and mark one `featured` (and
+ * perhaps a couple `wide`) so it composes as one large cell plus several small ones,
+ * not a uniform grid of identical cards.
+ *
+ * @typedef {object} Props
+ * @property {string} [class]
+ */
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['grid auto-rows-[minmax(150px,auto)] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3', className]}>
+  <slot />
+</div>

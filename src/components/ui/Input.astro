@@ -1,0 +1,65 @@
+---
+/**
+ * A labelled text input. Every other attribute — `x-model`, `type`, `placeholder`,
+ * `required` — lands on the `<input>`.
+ *
+ * `error` is a fixed message; `errorExpr` is an Alpine expression evaluating to a
+ * message or an empty string, for validation that runs in the browser.
+ *
+ *   <Input label="Title" name="title" x-model="form.title" errorExpr="errors.title" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [label]
+ * @property {string} [hint]
+ * @property {string} [error]
+ * @property {string} [errorExpr]
+ * @property {string} [icon]  Leading Lucide icon name.
+ * @property {string} [iconRight]  Trailing Lucide icon name.
+ * @property {'sm' | 'md' | 'lg'} [size]
+ * @property {string} [id]
+ * @property {string} [name]
+ * @property {string} [class]
+ * @property {unknown} [key] Extra attributes are spread onto the input.
+ */
+import Icon from './Icon.astro';
+
+const { label, hint, error, errorExpr, icon, iconRight, size = 'md', class: className, id, name, ...rest } = Astro.props;
+const inputId = id ?? (name ? `field-${name}` : undefined);
+const descId = inputId ? `${inputId}-desc` : undefined;
+const sizes = { sm: 'h-8 text-xs', md: 'h-10 text-sm', lg: 'h-12 text-base' };
+const invalidAttrs = errorExpr ? { 'x-bind:aria-invalid': `!!(${errorExpr}) || undefined` } : {};
+---
+
+<div class:list={['grid gap-1.5', className]}>
+  {label && <label for={inputId} class="text-xs font-medium text-fg">{label}</label>}
+  <div class="relative">
+    {icon && <Icon name={icon} class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-subtle" />}
+    <input
+      id={inputId}
+      name={name}
+      aria-invalid={error ? 'true' : undefined}
+      aria-describedby={error || hint || errorExpr ? descId : undefined}
+      class:list={[
+        'w-full rounded-lg border border-border-strong/70 bg-surface px-3 text-fg shadow-sm',
+        'placeholder:text-fg-subtle transition-colors',
+        'focus:border-ring focus:ring-3 focus:ring-ring/20 focus:outline-none',
+        'disabled:cursor-not-allowed disabled:opacity-60',
+        'aria-invalid:border-danger aria-invalid:focus:ring-danger/20',
+        sizes[size],
+        icon && 'pl-9',
+        iconRight && 'pr-9',
+      ]}
+      {...invalidAttrs}
+      {...rest}
+    />
+    {iconRight && <Icon name={iconRight} class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-fg-subtle" />}
+  </div>
+  {
+    errorExpr ? (
+      <p id={descId} class="text-xs" x-bind:class={`(${errorExpr}) ? 'text-danger' : 'text-fg-subtle'`} x-text={`(${errorExpr}) || ${JSON.stringify(hint ?? '')}`}>{hint}</p>
+    ) : (
+      (error || hint) && <p id={descId} class:list={['text-xs', error ? 'text-danger' : 'text-fg-subtle']}>{error ?? hint}</p>
+    )
+  }
+</div>

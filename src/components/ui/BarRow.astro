@@ -1,0 +1,53 @@
+---
+/**
+ * Horizontal comparison bars that fill in with a stagger — leaderboards, allocations,
+ * vote tallies. With nothing to rank it shows a designed empty state; never seed rows.
+ *
+ *   <BarRow items={[{ label: 'Aye', value: 42 }, …]} />
+ *   <BarRow items="$store.poll.tallies" format="formatCompact" />
+ *
+ * @typedef {object} Item
+ * @property {string} label
+ * @property {number} value
+ * @property {string} [hint]  Small line under the bar.
+ * @property {string} [colorClass]  A `bg-*` class for this bar; defaults to bg-primary.
+ *
+ * @typedef {object} Props
+ * @property {Item[] | string} items  Items, or an Alpine expression that evaluates to items.
+ * @property {number} [max]  Bar ceiling; defaults to the largest value.
+ * @property {string} [format]  Name of a `lib/format.js` export for values.
+ * @property {string} [empty]  Empty-state text, default "Nothing to rank yet".
+ * @property {string} [class]
+ */
+const { items, max, format, empty = 'Nothing to rank yet', class: className = '' } = Astro.props;
+
+const source = typeof items === 'string' ? `() => (${items})` : JSON.stringify(items);
+---
+
+<div class={className} x-data={`barRow(${source}, ${JSON.stringify({ max: max ?? null, format: format ?? null })})`}>
+  <div
+    class="rounded-xl border border-dashed border-border p-6 text-center text-sm text-fg-subtle"
+    x-show="rows.length === 0"
+    x-cloak
+  >
+    {empty}
+  </div>
+  <div class="space-y-3" x-show="rows.length > 0">
+    <template x-for="(row, i) in rows" x-bind:key="i">
+      <div>
+        <div class="mb-1 flex items-baseline justify-between gap-3 text-sm">
+          <span class="truncate text-fg-muted" x-text="row.label"></span>
+          <span class="shrink-0 font-medium tabular text-fg" x-text="row.formatted"></span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-surface-2">
+          <div
+            class="h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            x-bind:class="row.colorClass ?? 'bg-primary'"
+            x-bind:style="{ width: shown ? row.width : '0%', transitionDelay: `${i * 60}ms` }"
+          ></div>
+        </div>
+        <div class="mt-0.5 text-xs text-fg-subtle" x-show="row.hint" x-text="row.hint"></div>
+      </div>
+    </template>
+  </div>
+</div>

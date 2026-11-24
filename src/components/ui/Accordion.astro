@@ -1,0 +1,83 @@
+---
+/**
+ * Collapsible sections, one named slot per item:
+ *
+ *   <Accordion items={[{ key: 'fees', title: 'What are the fees?' }]}>
+ *     <p slot="fees">…</p>
+ *   </Accordion>
+ *
+ * `type="single"` keeps at most one open; `multiple` lets any number open.
+ */
+/**
+ * @typedef {object} AccordionItem
+ * @property {string} key
+ * @property {string} title
+ * @property {boolean} [disabled]
+ *
+ * @typedef {object} Props
+ * @property {AccordionItem[]} items
+ * @property {'single' | 'multiple'} [type]
+ * @property {string[]} [defaultOpen]
+ * @property {string} [id]  Prefix for the generated element ids; needed when two accordions share item keys.
+ * @property {string} [class]
+ */
+import Icon from './Icon.astro';
+
+const { items, type = 'single', defaultOpen = [], id = 'accordion', class: className } = Astro.props;
+const panels = await Promise.all(items.map(async (item) => ({ ...item, html: await Astro.slots.render(item.key) })));
+
+const data = `{
+  open: ${JSON.stringify(defaultOpen)},
+  isOpen(key) { return this.open.includes(key); },
+  toggle(key) {
+    if (this.isOpen(key)) this.open = this.open.filter((k) => k !== key);
+    else this.open = ${type === 'single' ? '[key]' : '[...this.open, key]'};
+  },
+}`;
+---
+
+<div class:list={['rounded-xl border', className]} x-data={data}>
+  {
+    panels.map((item) => {
+      const key = JSON.stringify(item.key);
+      const triggerId = `${id}-trigger-${item.key}`;
+      const panelId = `${id}-panel-${item.key}`;
+      return (
+        <div class="border-b last:border-b-0">
+          <button
+            id={triggerId}
+            type="button"
+            class:list={[
+              'flex w-full items-center justify-between gap-3 px-4 py-4 text-left text-sm font-medium text-fg transition-colors hover:bg-surface-2',
+              item.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+            ]}
+            aria-controls={panelId}
+            aria-disabled={item.disabled ? 'true' : undefined}
+            aria-expanded={defaultOpen.includes(item.key) ? 'true' : 'false'}
+            x-bind:aria-expanded={`isOpen(${key}).toString()`}
+            x-on:click={item.disabled ? undefined : `toggle(${key})`}
+          >
+            <span>{item.title}</span>
+            <Icon
+              name="chevron-down"
+              class="size-4 shrink-0 text-fg-muted transition-transform duration-200"
+              x-bind:class={`isOpen(${key}) && 'rotate-180'`}
+            />
+          </button>
+          <div
+            id={panelId}
+            role="region"
+            aria-labelledby={triggerId}
+            class="grid transition-[grid-template-rows] duration-250"
+            style={defaultOpen.includes(item.key) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'}
+            x-bind:style={`'grid-template-rows: ' + (isOpen(${key}) ? '1fr' : '0fr')`}
+          >
+            <div class="overflow-hidden">
+              <div class="px-4 pb-4 text-sm text-fg-muted" set:html={item.html} />
+            </div>
+          </div>
+        </div>
+      );
+    })
+  }
+</div>

@@ -1,0 +1,176 @@
+---
+/**
+ * Sortable, paginated table over rows held in Alpine state, with skeleton rows while
+ * loading and a designed empty state.
+ *
+ *   <DataTable
+ *     rows="$store.market.listings"
+ *     loading="$store.market.loading"
+ *     columns={[
+ *       { key: 'name', label: 'Name', sortable: true },
+ *       { key: 'price', label: 'Price', align: 'right', format: 'formatBalance', sortable: true },
+ *       { key: 'seller', label: 'Seller', cell: "displayName(row.seller)" },
+ *     ]}
+ *     onRowClick="$dispatch('open-listing', row.id)"
+ *     emptyTitle="No listings yet"
+ *   >
+ *     <Button slot="empty" href="/sell/">List an item</Button>
+ *   </DataTable>
+ *
+ * Cells render as text. `cell` is an Alpine expression with `row` in scope; the table
+ * keeps its own state under `table`, so helpers from the surrounding x-data stay visible.
+ *
+ * @typedef {object} Column
+ * @property {string} key  Row field, also the sort key.
+ * @property {string} label
+ * @property {'left' | 'center' | 'right'} [align]
+ * @property {string} [format]  Name of a `lib/format.js` export applied to the value.
+ * @property {string} [cell]  Alpine expression for the cell text; overrides `format`.
+ * @property {boolean} [sortable]
+ * @property {string} [class]  Extra classes for the column's cells, e.g. `min-w-[120px]`.
+ *
+ * @typedef {object} Props
+ * @property {Column[]} columns
+ * @property {string} rows  Alpine expression that evaluates to the row array.
+ * @property {string} [loading]  Alpine expression; true shows skeleton rows.
+ * @property {string} [rowKey]  Field that identifies a row; defaults to its index.
+ * @property {string} [onRowClick]  Alpine expression run on click, with `row` in scope.
+ * @property {number} [pageSize]  Rows per page, default 10; 0 disables paging.
+ * @property {number} [skeletonRows]  Default 5.
+ * @property {string} [emptyTitle]  Default "No data".
+ * @property {string} [emptyDescription]
+ * @property {string} [emptyIcon]  Lucide name, default "inbox".
+ * @property {boolean} [stickyHeader]  Default true.
+ * @property {string} [class]
+ */
+import Icon from './Icon.astro';
+import EmptyState from './EmptyState.astro';
+import Skeleton from './Skeleton.astro';
+
+const {
+  columns,
+  rows,
+  loading,
+  rowKey,
+  onRowClick,
+  pageSize = 10,
+  skeletonRows = 5,
+  emptyTitle = 'No data',
+  emptyDescription,
+  emptyIcon = 'inbox',
+  stickyHeader = true,
+  class: className = '',
+} = Astro.props;
+
+const alignClass = (align) => (align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left');
+const justifyClass = (align) => (align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : '');
+const sortSpec = columns.filter((c) => c.sortable).map((c) => c.key);
+const formats = Object.fromEntries(columns.filter((c) => c.format && !c.cell).map((c) => [c.key, c.format]));
+const config = JSON.stringify({ pageSize, sortable: sortSpec, formats });
+const keyExpr = rowKey ? `row[${JSON.stringify(rowKey)}] ?? i` : 'i';
+const cellExpr = (c) => c.cell ?? `table.cell(row, ${JSON.stringify(c.key)})`;
+---
+
+<div
+  class:list={['rounded-xl border bg-surface', className]}
+  x-data={`dataTable(() => (${rows}), () => (${loading ?? 'false'}), ${config})`}
+  x-effect="table.clamp()"
+>
+  <div x-show="table.loading || table.total > 0" class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr class="border-b">
+          {columns.map((c) => (
+            <th
+              scope="col"
+              class:list={[
+                'px-4 py-3 text-xs font-medium tracking-wide text-fg-muted uppercase',
+                stickyHeader && 'sticky top-0 z-10 bg-surface',
+                alignClass(c.align),
+                c.sortable && 'cursor-pointer transition-colors select-none hover:text-fg',
+                c.class,
+              ]}
+              x-bind:aria-sort={c.sortable ? `table.ariaSort(${JSON.stringify(c.key)})` : undefined}
+              x-on:click={c.sortable ? `table.toggle(${JSON.stringify(c.key)})` : undefined}
+            >
+              <span class:list={['inline-flex items-center gap-1', justifyClass(c.align)]}>
+                {c.label}
+                {c.sortable && (
+                  <>
+                    <span x-show={`table.sort?.key !== ${JSON.stringify(c.key)}`}>
+                      <Icon name="chevrons-up-down" class="size-3.5 text-fg-subtle" />
+                    </span>
+                    <span x-show={`table.sort?.key === ${JSON.stringify(c.key)} && table.sort.direction === 'asc'`} x-cloak>
+                      <Icon name="chevron-up" class="size-3.5 text-fg-muted" />
+                    </span>
+                    <span x-show={`table.sort?.key === ${JSON.stringify(c.key)} && table.sort.direction === 'desc'`} x-cloak>
+                      <Icon name="chevron-down" class="size-3.5 text-fg-muted" />
+                    </span>
+                  </>
+                )}
+              </span>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody x-show="table.loading">
+        {Array.from({ length: skeletonRows }).map(() => (
+          <tr class="border-b last:border-0">
+            {columns.map(() => (
+              <td class="px-4 py-3">
+                <Skeleton class="h-4 w-3/4" />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+      <tbody x-show="!table.loading" x-cloak>
+        <template x-for="(row, i) in table.page" x-bind:key={keyExpr}>
+          <tr
+            class:list={['border-b transition-colors last:border-0 hover:bg-surface-2', onRowClick && 'cursor-pointer']}
+            x-on:click={onRowClick}
+          >
+            {columns.map((c) => (
+              <td class:list={['px-4 py-3 text-sm text-fg', alignClass(c.align), c.class]} x-text={cellExpr(c)}></td>
+            ))}
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    x-show="!table.loading && table.pages > 1"
+    x-cloak
+    class="flex items-center justify-between gap-3 border-t px-4 py-2.5 text-xs text-fg-muted"
+  >
+    <span class="tabular" x-text="table.range"></span>
+    <div class="flex items-center gap-1">
+      <button
+        type="button"
+        class="grid size-7 cursor-pointer place-items-center rounded-md hover:bg-surface-2 hover:text-fg disabled:pointer-events-none disabled:opacity-40"
+        x-on:click="table.index--"
+        x-bind:disabled="table.index === 0"
+        aria-label="Previous page"
+      >
+        <Icon name="chevron-left" class="size-4" />
+      </button>
+      <span class="tabular" x-text="`${table.index + 1} / ${table.pages}`"></span>
+      <button
+        type="button"
+        class="grid size-7 cursor-pointer place-items-center rounded-md hover:bg-surface-2 hover:text-fg disabled:pointer-events-none disabled:opacity-40"
+        x-on:click="table.index++"
+        x-bind:disabled="table.index >= table.pages - 1"
+        aria-label="Next page"
+      >
+        <Icon name="chevron-right" class="size-4" />
+      </button>
+    </div>
+  </div>
+
+  <div x-show="!table.loading && table.total === 0" x-cloak>
+    <EmptyState title={emptyTitle} description={emptyDescription} icon={emptyIcon}>
+      {Astro.slots.has('empty') && <slot name="empty" />}
+    </EmptyState>
+  </div>
+</div>

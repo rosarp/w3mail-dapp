@@ -1,0 +1,12 @@
+{
+  "version": 0,
+  "descriptorPath": ".papi/descriptors",
+  "entries": {
+    "local": {
+      "wsUrl": "ws://127.0.0.1:9955",
+      "metadata": ".papi/metadata/local.scale",
+      "genesis": "0x99868555f5c7fea641a6e11f2751fb69650631f2abc506f4f4ba46570bb44671",
+      "codeHash": "0xa61da34b8c780a0e7efca4ca66bc922c64d4d8a2f3e892d60a5971f205756c61"
+    }
+  }
+}

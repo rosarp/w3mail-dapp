@@ -1,0 +1,52 @@
+---
+/**
+ * Mount once per page; the layout does. Trigger from Alpine:
+ *
+ *   $store.toasts.push({ title: 'Saved', message: 'All changes stored', tone: 'success' })
+ *
+ * Sits above the mobile tab bar on small screens.
+ */
+import Icon from './Icon.astro';
+---
+
+<div
+  x-data
+  aria-live="polite"
+  class="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end md:bottom-0"
+>
+  <template x-for="t in $store.toasts.items" :key="t.id">
+    <div
+      x-transition:enter="transition duration-200 ease-out"
+      x-transition:enter-start="opacity-0 translate-y-2"
+      class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border bg-surface p-4 shadow-lg"
+    >
+      <span
+        class="mt-0.5"
+        :class="{ 'text-info': t.tone === 'info', 'text-success': t.tone === 'success', 'text-warning': t.tone === 'warning', 'text-danger': t.tone === 'danger' }"
+      >
+        <template x-if="t.tone === 'success'"><Icon name="circle-check" /></template>
+        <template x-if="t.tone === 'warning'"><Icon name="triangle-alert" /></template>
+        <template x-if="t.tone === 'danger'"><Icon name="circle-alert" /></template>
+        <template x-if="t.tone === 'info'"><Icon name="info" /></template>
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium text-fg" x-text="t.title"></p>
+        <p class="mt-0.5 text-sm text-fg-muted" x-show="t.message" x-text="t.message"></p>
+        <a
+          x-show="t.link"
+          :href="t.link?.href"
+          class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          x-text="t.link?.label"
+        ></a>
+      </div>
+      <button
+        type="button"
+        class="-m-1 grid size-7 place-items-center rounded-md text-fg-subtle hover:bg-surface-2 hover:text-fg"
+        x-on:click="$store.toasts.dismiss(t.id)"
+        aria-label="Dismiss notification"
+      >
+        <Icon name="x" class="size-3.5" />
+      </button>
+    </div>
+  </template>
+</div>

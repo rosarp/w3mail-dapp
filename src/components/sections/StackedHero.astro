@@ -1,0 +1,26 @@
+---
+/**
+ * Editorial hero: a large left-aligned headline stacked above a full-width `media`
+ * band (a wide image, a StatStrip, a chart). Typography carries the top of the page.
+ * Actions go in the `actions` slot.
+ *
+ * @typedef {object} Props
+ * @property {string} title  Use the `title` slot instead for rich markup.
+ * @property {string} [eyebrow]
+ * @property {string} [description]
+ * @property {string} [class]
+ */
+const { title, eyebrow, description, class: className = '' } = Astro.props;
+---
+
+<div class:list={['animate-rise', className]}>
+  <div class="max-w-3xl">
+    {eyebrow && <p class="mb-3 text-xs font-medium tracking-wider text-primary uppercase">{eyebrow}</p>}
+    <h1 class="font-display text-5xl leading-tight font-semibold tracking-tight text-fg md:text-6xl">
+      {Astro.slots.has('title') ? <slot name="title" /> : title}
+    </h1>
+    {description && <p class="mt-5 max-w-prose text-lg text-fg-muted">{description}</p>}
+    {Astro.slots.has('actions') && <div class="mt-7 flex flex-wrap items-center gap-3"><slot name="actions" /></div>}
+  </div>
+  {Astro.slots.has('media') && <div class="mt-10"><slot name="media" /></div>}
+</div>

@@ -1,0 +1,80 @@
+---
+/**
+ * Proportional distribution ring — vote splits, pool composition, allocations. With a
+ * zero total it shows a muted ring and "No data yet"; never seed segments.
+ *
+ *   <DonutChart segments={[{ label: 'Aye', value: 60 }, …]} centerLabel="votes" />
+ *   <DonutChart segments="$store.poll.split" format="formatCompact" />
+ *
+ * @typedef {object} Segment
+ * @property {string} label
+ * @property {number} value
+ * @property {string} [color]  Any CSS colour; defaults cycle primary, success, warning, danger.
+ *
+ * @typedef {object} Props
+ * @property {Segment[] | string} segments  Segments, or an Alpine expression for them.
+ * @property {number} [size]  Ring diameter in pixels, default 160.
+ * @property {number} [thickness]  Ring width in pixels, default 14.
+ * @property {string} [centerValue]  Centre readout; defaults to the formatted total.
+ * @property {string} [centerLabel]  Caption under the centre readout.
+ * @property {boolean} [showLegend]  Default true.
+ * @property {string} [format]  Name of a `lib/format.js` export for values.
+ * @property {string} [class]
+ */
+import { donutSlices, formatValue } from '../../lib/charts.js';
+
+const {
+  segments,
+  size = 160,
+  thickness = 14,
+  centerValue,
+  centerLabel,
+  showLegend = true,
+  format,
+  class: className = '',
+} = Astro.props;
+
+const live = typeof segments === 'string';
+const ring = donutSlices(live ? [] : segments);
+const source = live ? `() => (${segments})` : JSON.stringify(segments);
+const mask = `radial-gradient(farthest-side, transparent calc(100% - ${thickness}px), #000 calc(100% - ${thickness}px + 0.5px))`;
+const hasData = !live && ring.total > 0;
+---
+
+<div
+  class:list={['flex items-center gap-6', className]}
+  x-data={`donutChart(${source}, ${JSON.stringify({ format: format ?? null, centerValue: centerValue ?? null })})`}
+>
+  <div class="relative shrink-0" style={`width: ${size}px; height: ${size}px`}>
+    <div
+      class="absolute inset-0 rounded-full transition-[background] duration-500"
+      role="img"
+      aria-label={centerLabel ?? 'Distribution chart'}
+      style={`background: ${ring.background}; mask: ${mask}; -webkit-mask: ${mask};`}
+      x-bind:style={`{ background: ring.background }`}
+    ></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+      <div style={hasData ? undefined : 'display: none;'} x-show="ring.total > 0">
+        <div class="text-2xl leading-none font-semibold tabular text-fg" x-text="center">
+          {hasData ? (centerValue ?? formatValue(format, ring.total)) : ''}
+        </div>
+        {centerLabel && <div class="mt-1 text-xs tracking-wide text-fg-subtle uppercase">{centerLabel}</div>}
+      </div>
+      <div class="px-4 text-sm text-fg-subtle" style={hasData || live ? 'display: none;' : undefined} x-show="ring.total === 0">
+        No data yet
+      </div>
+    </div>
+  </div>
+  {showLegend && (
+    <ul class="min-w-0 flex-1 space-y-2" x-show="ring.total > 0" style={hasData ? undefined : 'display: none;'}>
+      <template x-for="(slice, i) in ring.slices" x-bind:key="i">
+        <li class="flex items-center gap-2 text-sm">
+          <span class="size-2.5 shrink-0 rounded-full" x-bind:style="{ background: slice.color }"></span>
+          <span class="truncate text-fg-muted" x-text="slice.label"></span>
+          <span class="ml-auto pl-3 font-medium tabular text-fg" x-text="formatted(slice.value)"></span>
+          <span class="w-10 text-right tabular text-fg-subtle" x-text="`${Math.round(slice.fraction * 100)}%`"></span>
+        </li>
+      </template>
+    </ul>
+  )}
+</div>

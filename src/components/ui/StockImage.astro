@@ -1,0 +1,80 @@
+---
+/**
+ * Curated imagery from the bundled pack in `public/stock/`, or any image URL. Handles
+ * cover fit, aspect ratio, lazy loading and an optional scrim so overlaid text stays
+ * legible; a missing source shows a placeholder, never a broken box. The default slot
+ * renders above the image.
+ *
+ * `src` is fixed; `srcExpr` is an Alpine expression, for images from chain data.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [src]  e.g. "stock/nature-123.webp"; a leading slash is added.
+ * @property {string} [srcExpr]
+ * @property {string} alt
+ * @property {'square' | 'video' | 'wide' | 'portrait' | 'auto'} [aspect]
+ * @property {'none' | 'bottom' | 'full'} [overlay]
+ * @property {boolean} [rounded]
+ * @property {boolean} [priority]  Eager-load; for above-the-fold heroes only.
+ * @property {string} [class]
+ */
+import Icon from './Icon.astro';
+
+const {
+  src = '',
+  srcExpr,
+  alt,
+  aspect = 'video',
+  overlay = 'none',
+  rounded = true,
+  priority = false,
+  class: className,
+} = Astro.props;
+
+const aspects = {
+  square: 'aspect-square',
+  video: 'aspect-video',
+  wide: 'aspect-[21/9]',
+  portrait: 'aspect-[3/4]',
+  auto: '',
+};
+
+const normalise = (/** @type {string} */ s) => {
+  const t = (s ?? '').trim();
+  if (!t || t === '/') return '';
+  return t.startsWith('/') || t.startsWith('http') || t.startsWith('data:') ? t : `/${t}`;
+};
+const url = normalise(src);
+const urlExpr = srcExpr
+  ? `(() => { const t = String((${srcExpr}) ?? '').trim(); if (!t || t === '/') return ''; return /^(\\/|http|data:)/.test(t) ? t : '/' + t; })()`
+  : null;
+---
+
+<div class:list={['relative overflow-hidden bg-surface-2', rounded && 'rounded-2xl', aspects[aspect], className]} {...(urlExpr ? { 'x-data': '' } : {})}>
+  {
+    urlExpr ? (
+      <>
+        <img
+          x-bind:src={urlExpr}
+          x-show={urlExpr}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          class="absolute inset-0 h-full w-full object-cover"
+        />
+        <div role="img" aria-label={alt || 'No image'} x-show={`!${urlExpr}`} class="absolute inset-0 grid place-items-center text-fg-subtle">
+          <Icon name="image" class="size-10 opacity-40" />
+        </div>
+      </>
+    ) : url ? (
+      <img src={url} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" class="absolute inset-0 h-full w-full object-cover" />
+    ) : (
+      <div role="img" aria-label={alt || 'No image'} class="absolute inset-0 grid place-items-center text-fg-subtle">
+        <Icon name="image" class="size-10 opacity-40" />
+      </div>
+    )
+  }
+  {overlay === 'bottom' && <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>}
+  {overlay === 'full' && <div class="absolute inset-0 bg-black/40"></div>}
+  <slot />
+</div>

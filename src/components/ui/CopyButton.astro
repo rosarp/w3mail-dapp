@@ -1,0 +1,49 @@
+---
+/**
+ * Copies a value to the clipboard and shows a check for a moment. `value` is fixed;
+ * `valueExpr` is an Alpine expression read at click time.
+ *
+ *   <CopyButton valueExpr="$store.wallet.address" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [value]
+ * @property {string} [valueExpr]
+ * @property {string} [label]  Accessible label; default "Copy".
+ * @property {boolean} [showLabel]  Show the label as text beside the icon.
+ * @property {number} [feedbackMs]
+ * @property {string} [class]
+ * @property {string} [iconClass]
+ */
+import Icon from './Icon.astro';
+
+const {
+  value = '',
+  valueExpr,
+  label = 'Copy',
+  showLabel = false,
+  feedbackMs = 1500,
+  class: className,
+  iconClass = 'size-4',
+} = Astro.props;
+
+const read = valueExpr ?? JSON.stringify(value);
+---
+
+<button
+  type="button"
+  x-data={`copyButton(() => ${read}, ${feedbackMs})`}
+  x-on:click="copy()"
+  x-bind:aria-label={`copied ? 'Copied' : ${JSON.stringify(label)}`}
+  aria-label={label}
+  aria-live="polite"
+  class:list={[
+    'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-sm text-fg-muted transition-colors',
+    'hover:bg-surface-2 hover:text-fg',
+    className,
+  ]}
+>
+  <Icon name="copy" class={iconClass} x-show="!copied" />
+  <Icon name="check" class={`${iconClass} text-success`} x-show="copied" x-cloak />
+  {showLabel && <span x-text={`copied ? 'Copied' : ${JSON.stringify(label)}`}>{label}</span>}
+</button>

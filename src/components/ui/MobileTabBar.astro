@@ -1,0 +1,95 @@
+---
+/**
+ * The native-style bottom tab bar for phones, hidden from `md` up. Owns all nav
+ * styling — pass tabs, never classes. The active tab is chosen from the page URL at
+ * build time; `end` makes a tab match its path exactly (use it for "/").
+ *
+ * `centerAction` adds a raised middle button for the app's primary action, such as
+ * the page that composes a post.
+ *
+ *   <MobileTabBar
+ *     tabs={[{ href: '/', label: 'Feed', icon: 'house', end: true }, { href: '/profile/', label: 'Profile', icon: 'user' }]}
+ *     centerAction={{ icon: 'plus', label: 'New post', href: '/feed/compose/' }}
+ *   />
+ *
+ * Reserve room for it on scrolling content with `pb-20 md:pb-0`.
+ */
+/**
+ * @typedef {object} MobileTab
+ * @property {string} href
+ * @property {string} label
+ * @property {string} icon  Lucide icon name.
+ * @property {boolean} [end]
+ *
+ * @typedef {object} CenterAction
+ * @property {string} icon
+ * @property {string} label  Accessible label; the button is icon-only.
+ * @property {string} href
+ *
+ * @typedef {object} Props
+ * @property {MobileTab[]} tabs
+ * @property {CenterAction} [centerAction]
+ */
+import Icon from './Icon.astro';
+
+const { tabs, centerAction } = Astro.props;
+
+const trim = (/** @type {string} */ p) => (p.length > 1 ? p.replace(/\/+$/, '') : p);
+const here = trim(Astro.url.pathname);
+const isActive = (/** @type {MobileTab} */ tab) => {
+  const target = trim(tab.href);
+  return tab.end || target === '/' ? here === target : here === target || here.startsWith(`${target}/`);
+};
+
+const mid = Math.ceil(tabs.length / 2);
+const left = centerAction ? tabs.slice(0, mid) : tabs;
+const right = centerAction ? tabs.slice(mid) : [];
+---
+
+<nav aria-label="Primary" class="fixed inset-x-0 bottom-0 z-40 border-t bg-bg pb-[env(safe-area-inset-bottom)] md:hidden">
+  <div class="mx-auto flex max-w-md items-stretch">
+    {
+      left.map((tab) => (
+        <a
+          href={tab.href}
+          aria-current={isActive(tab) ? 'page' : undefined}
+          class:list={[
+            'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
+            isActive(tab) ? 'text-fg' : 'text-fg-muted',
+          ]}
+        >
+          <Icon name={tab.icon} class="size-5" />
+          <span>{tab.label}</span>
+        </a>
+      ))
+    }
+    {
+      centerAction && (
+        <a
+          href={centerAction.href}
+          aria-label={centerAction.label}
+          class="flex min-h-14 flex-1 cursor-pointer items-center justify-center transition-transform active:scale-95"
+        >
+          <span class="grid size-11 place-items-center rounded-full bg-primary text-primary-fg shadow-md">
+            <Icon name={centerAction.icon} class="size-5" />
+          </span>
+        </a>
+      )
+    }
+    {
+      right.map((tab) => (
+        <a
+          href={tab.href}
+          aria-current={isActive(tab) ? 'page' : undefined}
+          class:list={[
+            'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
+            isActive(tab) ? 'text-fg' : 'text-fg-muted',
+          ]}
+        >
+          <Icon name={tab.icon} class="size-5" />
+          <span>{tab.label}</span>
+        </a>
+      ))
+    }
+  </div>
+</nav>

@@ -1,0 +1,31 @@
+---
+/**
+ * Structural hero: an oversized uppercase headline panel beside a smaller bordered
+ * `media` panel (a console readout, a stat block, live status). Depth comes from
+ * borders and weight, not shadow — suits brutalist and terminal directions, where the
+ * theme's radius is zero. Actions go in the `actions` slot.
+ *
+ * @typedef {object} Props
+ * @property {string} title  Use the `title` slot instead for rich markup.
+ * @property {string} [eyebrow]
+ * @property {string} [description]
+ * @property {string} [class]
+ */
+const { title, eyebrow, description, class: className = '' } = Astro.props;
+---
+
+<div class:list={['grid gap-6 lg:grid-cols-5 lg:gap-8', className]}>
+  <div class="animate-rise border-2 border-border p-6 md:p-8 lg:col-span-3">
+    {eyebrow && <p class="mb-3 text-xs font-bold tracking-wider text-primary uppercase">{eyebrow}</p>}
+    <h1 class="font-display text-4xl leading-none font-bold tracking-tight text-fg uppercase md:text-5xl">
+      {Astro.slots.has('title') ? <slot name="title" /> : title}
+    </h1>
+    {description && <p class="mt-5 max-w-prose text-lg text-fg-muted">{description}</p>}
+    {Astro.slots.has('actions') && <div class="mt-7 flex flex-wrap items-center gap-3"><slot name="actions" /></div>}
+  </div>
+  {Astro.slots.has('media') && (
+    <div class="animate-rise border-2 border-border p-6 lg:col-span-2" style="animation-delay: 80ms">
+      <slot name="media" />
+    </div>
+  )}
+</div>

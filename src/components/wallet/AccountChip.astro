@@ -1,0 +1,37 @@
+---
+import AddressAvatar from '../ui/AddressAvatar.astro';
+
+/**
+ * Who the user is, from `$store.wallet`. The host connects on load, so there is no
+ * connect button: outside a host this reads "Open in host". On the local development
+ * chain it names the dev account and links to the page that switches it.
+ */
+---
+
+<div x-data class="contents">
+  <template x-if="$store.wallet.isConnected && $store.wallet.mode === 'dev'">
+    <a
+      href="/dev-account/"
+      x-bind:href="`/dev-account/?return=${encodeURIComponent(location.pathname + location.search)}`"
+      class="flex items-center gap-2 rounded-full border border-warning bg-surface-2 py-1 pr-3 pl-1 hover:bg-surface-3"
+      :title="$store.wallet.address"
+    >
+      <AddressAvatar addressExpr="$store.wallet.address" size={22} />
+      <span class="max-w-40 truncate text-sm font-medium text-fg" x-text="`Dev account: ${$store.wallet.displayName}`"></span>
+    </a>
+  </template>
+  <template x-if="$store.wallet.isConnected && $store.wallet.mode !== 'dev'">
+    <div
+      class="flex items-center gap-2 rounded-full border bg-surface-2 py-1 pr-3 pl-1"
+      :title="$store.wallet.address"
+    >
+      <AddressAvatar addressExpr="$store.wallet.address" size={22} />
+      <span class="max-w-40 truncate text-sm font-medium text-fg" x-text="$store.wallet.displayName"></span>
+    </div>
+  </template>
+  <template x-if="!$store.wallet.isConnected">
+    <div class="flex items-center gap-2 rounded-full border bg-surface-2 px-3 py-1 text-sm text-fg-subtle">
+      <span x-text="$store.wallet.mode === 'detecting' ? 'Connecting…' : 'Open in host'">Open in host</span>
+    </div>
+  </template>
+</div>

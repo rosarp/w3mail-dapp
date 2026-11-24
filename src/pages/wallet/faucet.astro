@@ -1,0 +1,74 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageLayout from '../../components/shell/PageLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import Icon from '../../components/ui/Icon.astro';
+import { FAUCET_URL } from '../../lib/faucet.js';
+---
+
+<Layout title="Top up">
+  <PageLayout>
+    <div x-data="faucetPage" class="mx-auto max-w-md space-y-6 py-8">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-fg">Top up to continue</h1>
+        <p class="mt-2 text-sm text-fg-muted">
+          Your account doesn’t have enough PAS to cover the transaction’s deposit and fees. Grab free test PAS from
+          the faucet, then go back and try again.
+        </p>
+      </div>
+
+      <div>
+        <label for="faucet-address" class="text-sm font-medium text-fg">Your address</label>
+        <div class="mt-1 flex gap-2">
+          <input
+            id="faucet-address"
+            readonly
+            :value="$store.wallet.address ?? ''"
+            class="flex-1 truncate rounded-lg border bg-surface-2 px-3 py-2 font-mono text-sm text-fg-muted"
+          />
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-2 rounded-lg bg-surface-2 px-3 text-sm font-medium text-fg hover:bg-surface-3"
+            x-on:click="copy()"
+          >
+            <span x-show="!copied"><Icon name="copy" class="size-4" /></span>
+            <span x-show="copied" x-cloak><Icon name="check" class="size-4 text-success" /></span>
+            <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+          </button>
+        </div>
+      </div>
+
+      <a
+        href={FAUCET_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-fg shadow-sm hover:bg-primary-hover"
+      >
+        <Icon name="external-link" class="size-4" /> Open Polkadot Faucet
+      </a>
+      <p class="text-xs text-fg-subtle">
+        Paste your address into the faucet (Asset Hub Next, parachain 1500). Funds usually arrive within seconds.
+      </p>
+
+      <Button href="/" x-bind:href="returnTo" variant="secondary" icon="chevron-left">Back</Button>
+    </div>
+  </PageLayout>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { returnPath } from '../../lib/faucet.js';
+  import { walletStore } from '../../lib/stores.js';
+
+  Alpine.data('faucetPage', () => ({
+    copied: false,
+    returnTo: returnPath(window.location.search),
+
+    copy() {
+      navigator.clipboard.writeText(walletStore()?.address ?? '').then(() => {
+        this.copied = true;
+        setTimeout(() => (this.copied = false), 2000);
+      });
+    },
+  }));
+</script>

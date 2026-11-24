@@ -1,0 +1,25 @@
+---
+/**
+ * Page section that owns vertical rhythm and content width, so pages get a varied
+ * cadence instead of uniform spacing — follow a `loose` hero with a `tight` data band.
+ * Below-the-fold sections fade and rise into view once; reduced motion turns it off.
+ *
+ * @typedef {object} Props
+ * @property {'narrow' | 'standard' | 'wide' | 'full'} [width]  Default `standard`.
+ * @property {'tight' | 'normal' | 'loose'} [spacing]  Default `normal`.
+ * @property {string} [bleed]  Background classes for a full-bleed band, e.g. `bg-surface`; content stays constrained.
+ * @property {boolean} [animate]  Scroll-in entrance, default true.
+ * @property {string} [id]
+ * @property {string} [class]  Classes for the inner, constrained container.
+ */
+const { width = 'standard', spacing = 'normal', bleed, animate = true, id, class: className = '' } = Astro.props;
+
+const widths = { narrow: 'max-w-3xl', standard: 'max-w-6xl', wide: 'max-w-7xl', full: 'max-w-none' };
+const spacings = { tight: 'py-8 md:py-10', normal: 'py-12 md:py-16', loose: 'py-16 md:py-24' };
+---
+
+<section id={id} class:list={[spacings[spacing], bleed]} x-data={animate ? 'reveal' : undefined}>
+  <div class:list={['mx-auto w-full px-4 sm:px-6 lg:px-8', widths[width], className]}>
+    <slot />
+  </div>
+</section>

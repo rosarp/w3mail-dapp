@@ -1,0 +1,30 @@
+---
+/**
+ * One cell of a `BentoGrid`. Becomes a link with `href`, or a button with `onClick`.
+ *
+ * @typedef {object} Props
+ * @property {boolean} [featured]  Spans two columns and two rows — the focal cell.
+ * @property {boolean} [wide]  Spans two columns.
+ * @property {string} [href]
+ * @property {string} [onClick]  Alpine expression run on click.
+ * @property {string} [class]
+ */
+const { featured = false, wide = false, href, onClick, class: className = '' } = Astro.props;
+
+const interactive = href || onClick;
+const classes = [
+  'block rounded-xl border bg-surface p-6 shadow-sm',
+  interactive && 'w-full cursor-pointer text-left transition-shadow duration-300 hover:shadow-md',
+  featured && 'sm:col-span-2 sm:row-span-2',
+  wide && !featured && 'sm:col-span-2',
+  className,
+];
+---
+
+{href ? (
+  <a href={href} class:list={classes}><slot /></a>
+) : onClick ? (
+  <button type="button" class:list={classes} x-data x-on:click={onClick}><slot /></button>
+) : (
+  <div class:list={classes}><slot /></div>
+)}

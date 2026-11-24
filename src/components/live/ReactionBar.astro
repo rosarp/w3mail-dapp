@@ -1,0 +1,56 @@
+---
+/**
+ * Live cross-user emoji reactions with a particle burst on tap. Counts are real and
+ * deduplicated per user.
+ *
+ *   <ReactionBar targetId={post.id} emojis={['🔥', '💜', '🎉']} />
+ *
+ * For a target only known in the browser, bind it: `<ReactionBar target="post.id" />`.
+ * Outside a host the bar stays visible but inert — it never fakes counts.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [targetId]  What is being reacted to.
+ * @property {string} [target]  An Alpine expression for the target, instead of `targetId`.
+ * @property {string[]} [emojis]
+ * @property {string} [class]
+ */
+const { targetId, target, emojis = ['🔥', '💜', '🎉'], class: className } = Astro.props;
+const targetExpr = target ?? JSON.stringify(targetId ?? '');
+---
+
+<div
+  x-data={`reactionBar(${targetExpr})`}
+  class:list={['flex flex-wrap items-center gap-1.5', className]}
+  role="group"
+  aria-label="Reactions"
+>
+  {
+    emojis.map((emoji) => {
+      const e = JSON.stringify(emoji);
+      return (
+        <button
+          type="button"
+          class="relative inline-flex items-center gap-1 rounded-full border bg-surface px-2.5 py-1 text-sm transition-colors"
+          x-bind:class={`[
+            mine.includes(${e}) ? 'border-primary/40 text-primary' : 'border-border text-fg-muted hover:text-fg',
+            !isLive && 'cursor-not-allowed opacity-50',
+          ]`}
+          x-bind:aria-pressed={`mine.includes(${e})`}
+          x-bind:aria-disabled="!isLive"
+          x-bind:title={`isLive ? 'React with ' + ${e} : 'Live reactions need the Polkadot host'`}
+          x-on:click={`if (isLive) { $burst($el, ${e}); react(${e}) }`}
+        >
+          <span aria-hidden="true">{emoji}</span>
+          <span
+            class="text-xs tabular-nums"
+            x-bind:class={`mine.includes(${e}) ? 'text-primary' : 'text-fg-subtle'`}
+            x-show={`(counts[${e}] ?? 0) > 0`}
+            x-text={`counts[${e}]`}
+          />
+          <span class="pointer-events-none absolute inset-0" aria-hidden="true" data-burst />
+        </button>
+      );
+    })
+  }
+</div>

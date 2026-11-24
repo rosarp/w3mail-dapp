@@ -1,0 +1,15 @@
+---
+/**
+ * A loading placeholder. Size it with `class`; use it for anything that loads, not a
+ * spinner.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [class]
+ * @property {unknown} [key] Extra attributes are spread onto the root element.
+ */
+
+const { class: className = 'h-4 w-full', ...rest } = Astro.props;
+---
+
+<div class:list={['animate-pulse rounded-md bg-surface-3', className]} aria-hidden="true" {...rest}></div>

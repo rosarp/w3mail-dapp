@@ -1,0 +1,70 @@
+---
+/**
+ * Inline Lucide icon.
+ *
+ * Reads the SVG from `lucide-static` at build time and inlines it, so icons
+ * cost nothing at runtime — no icon font, no sprite fetch, no client JS.
+ *
+ *   <Icon name="sparkles" class="w-4 h-4" />
+ *
+ * `size` is a convenience for the common square case; anything passed via
+ * `class` (Tailwind `w-*`/`h-*`) wins over it, since the class lands on the
+ * same element.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} name  kebab-case Lucide icon name, e.g. "folder-open".
+ * @property {number} [size]  Pixel size applied to width/height when no sizing class is given.
+ * @property {string} [class]
+ * @property {number} [strokeWidth]
+ * @property {boolean | 'true' | 'false'} [aria-hidden]
+ * @property {unknown} [key] Extra attributes are spread onto the root element.
+ */
+
+const {
+  name,
+  size = 16,
+  class: className = '',
+  strokeWidth,
+  ...rest
+} = Astro.props;
+
+// Eager glob: the build inlines only the icons actually referenced, and an
+// unknown name fails at build time rather than rendering an empty box.
+const icons = import.meta.glob('/node_modules/lucide-static/icons/*.svg', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const source = icons[`/node_modules/lucide-static/icons/${name}.svg`];
+if (!source) {
+  throw new Error(
+    `Icon "${name}" not found in lucide-static. Check the kebab-case name at https://lucide.dev/icons`,
+  );
+}
+
+// Strip the license comment and the package's own attributes we override.
+const body = source
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/^[\s\S]*?<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .trim();
+
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width={strokeWidth ?? 2}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  {...rest}
+  class={`lucide lucide-${name} ${className}`}
+  set:html={body}
+/>

@@ -1,0 +1,87 @@
+---
+/**
+ * The standard button for an on-chain write. It gates on a connected account, shows
+ * a spinner while signing, and reports pending → confirmed / failed through
+ * `$store.tx`. `run` is an Alpine expression returning a promise; resolve it to a tx
+ * hash (or `{ txHash }`) to get an explorer link in the success toast.
+ *
+ *   <TxButton title="Minting" run="mint(form.uri)" explorerBaseUrl="https://blockscout-testnet.polkadot.io">Mint</TxButton>
+ *
+ * On success it dispatches `tx-confirmed` with the result, on failure `tx-failed`
+ * with the error.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} run  Alpine expression.
+ * @property {string} [title]  Toast title; default the button's text.
+ * @property {string} [pendingMessage]
+ * @property {string} [successMessage]
+ * @property {string} [explorerBaseUrl]
+ * @property {boolean} [requireConnect]  Show a connect button while disconnected; default true.
+ * @property {string} [disabled]  Alpine expression.
+ * @property {'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'} [variant]
+ * @property {'sm' | 'md' | 'lg'} [size]
+ * @property {string} [icon]
+ * @property {boolean} [block]
+ * @property {string} [class]
+ */
+import Button from './Button.astro';
+
+const {
+  run,
+  title,
+  pendingMessage = 'Confirm in your wallet…',
+  successMessage = 'Transaction confirmed',
+  explorerBaseUrl,
+  requireConnect = true,
+  disabled,
+  variant = 'primary',
+  size = 'md',
+  icon,
+  block = false,
+  class: className,
+} = Astro.props;
+
+const label = (await Astro.slots.render('default')).replace(/<[^>]+>/g, '').trim();
+const opts = JSON.stringify({
+  title: title ?? (label || 'Transaction'),
+  pendingMessage,
+  successMessage,
+  explorerBaseUrl: explorerBaseUrl?.replace(/\/$/, '') ?? null,
+});
+const gate = requireConnect ? '!$store.wallet.isConnected' : 'false';
+const disabledExpr = disabled ? `busy || (${disabled})` : 'busy';
+---
+
+<span x-data={`txButton(() => ${run}, ${opts})`} class="contents">
+  {
+    requireConnect && (
+      <Button
+        variant={variant}
+        size={size}
+        block={block}
+        class={className}
+        x-show={gate}
+        x-cloak
+        loading="$store.wallet.connecting"
+        x-bind:disabled="$store.wallet.mode === 'host-required' || $store.wallet.connecting"
+        x-on:click="$store.wallet.connect().catch(() => {})"
+      >
+        <span x-text="$store.wallet.mode === 'host-required' ? 'Open in host' : 'Connect'">Connect</span>
+      </Button>
+    )
+  }
+  <Button
+    variant={variant}
+    size={size}
+    block={block}
+    icon={icon}
+    class={className}
+    loading="busy"
+    x-show={`!(${gate})`}
+    x-bind:disabled={disabledExpr}
+    x-on:click="send()"
+  >
+    <slot />
+  </Button>
+</span>

@@ -1,0 +1,31 @@
+---
+/**
+ * Asymmetric hero: content about 58%, a supporting visual about 42%. Always fill the
+ * `media` slot — a live panel, key metric or art panel — so the hero reads as
+ * information, not decoration. Actions go in the `actions` slot.
+ *
+ * @typedef {object} Props
+ * @property {string} title  Use the `title` slot instead for rich markup.
+ * @property {string} [eyebrow]
+ * @property {string} [description]
+ * @property {boolean} [mediaLeft]  Put the visual on the left.
+ * @property {string} [class]
+ */
+const { title, eyebrow, description, mediaLeft = false, class: className = '' } = Astro.props;
+---
+
+<div class:list={['grid items-center gap-8 lg:grid-cols-12 lg:gap-12', className]}>
+  <div class:list={['animate-rise lg:col-span-7', mediaLeft && 'lg:order-2']}>
+    {eyebrow && <p class="mb-3 text-xs font-medium tracking-wider text-primary uppercase">{eyebrow}</p>}
+    <h1 class="font-display text-4xl leading-tight font-semibold tracking-tight text-fg md:text-5xl">
+      {Astro.slots.has('title') ? <slot name="title" /> : title}
+    </h1>
+    {description && <p class="mt-5 max-w-prose text-lg text-fg-muted">{description}</p>}
+    {Astro.slots.has('actions') && <div class="mt-7 flex flex-wrap items-center gap-3"><slot name="actions" /></div>}
+  </div>
+  {Astro.slots.has('media') && (
+    <div class:list={['animate-rise lg:col-span-5', mediaLeft && 'lg:order-1']} style="animation-delay: 80ms">
+      <slot name="media" />
+    </div>
+  )}
+</div>

@@ -1,0 +1,56 @@
+---
+import AddressAvatar from '../ui/AddressAvatar.astro';
+/**
+ * Real-time cross-user activity on a topic, newest first. The default slot renders one
+ * entry's body with `entry` in scope; avatar, author and time are provided.
+ *
+ *   <LiveActivityFeed topic="activity">
+ *     <span x-text="entry.data.text"></span>
+ *   </LiveActivityFeed>
+ *
+ * Outside a host the empty state says live activity needs the Polkadot app — never seed data.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} topic
+ * @property {string} [emptyTitle]
+ * @property {string} [emptyDescription]
+ * @property {number} [maxItems]
+ * @property {string} [class]
+ */
+import EmptyState from '../ui/EmptyState.astro';
+
+const { topic, emptyTitle = 'No activity yet', emptyDescription, maxItems = 50, class: className } = Astro.props;
+const args = JSON.stringify([topic, { limit: maxItems }]).slice(1, -1);
+---
+
+<div x-data={`liveActivityFeed(${args})`} class={className}>
+  <template x-if="entries.length === 0">
+    <div>
+      <EmptyState
+        icon="radio"
+        title={emptyTitle}
+        description={emptyDescription ?? 'Be the first — activity from everyone using this app shows up here in real time.'}
+        x-show="isLive"
+      />
+      <EmptyState
+        icon="radio"
+        title={emptyTitle}
+        description={emptyDescription ?? 'Open this app inside the Polkadot host to see live activity from other users.'}
+        x-show="!isLive"
+      />
+    </div>
+  </template>
+  <ul class="flex flex-col" x-show="entries.length > 0">
+    <template x-for="entry in entries" x-bind:key="entry.id">
+      <li class="flex animate-rise items-start gap-3 border-b border-border py-3 last:border-b-0">
+        <span class="mt-0.5"><AddressAvatar addressExpr="entry.author" size={28} /></span>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs text-fg-subtle" x-text="entry.label ?? truncate(entry.author)"></div>
+          <div class="text-sm text-fg"><slot /></div>
+        </div>
+        <span class="shrink-0 text-xs text-fg-subtle" x-text="ago(entry.timestamp)"></span>
+      </li>
+    </template>
+  </ul>
+</div>

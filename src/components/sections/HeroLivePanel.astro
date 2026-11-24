@@ -1,0 +1,24 @@
+---
+/**
+ * Live window for a hero's `media` slot: a titled frame with who's-here presence in the
+ * header and cross-user activity below, so the hero is literally alive. Put a
+ * `PresenceAvatars` in the `presence` slot and a `LiveActivityFeed` (capped to about
+ * four entries) in the default slot. Entries come from the Statement Store only; never
+ * seed fake activity.
+ *
+ * @typedef {object} Props
+ * @property {string} title
+ * @property {string} [class]
+ */
+const { title, class: className = '' } = Astro.props;
+---
+
+<div class:list={['overflow-hidden rounded-xl border bg-surface shadow-sm', className]}>
+  <div class="flex items-center justify-between gap-3 border-b bg-surface-2 px-5 py-3.5">
+    <h3 class="min-w-0 truncate text-sm font-semibold text-fg">{title}</h3>
+    {Astro.slots.has('presence') && <div class="shrink-0"><slot name="presence" /></div>}
+  </div>
+  <div class="px-5 py-2">
+    <slot />
+  </div>
+</div>

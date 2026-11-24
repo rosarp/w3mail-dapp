@@ -1,0 +1,140 @@
+{
+  "name": "w3mail",
+  "description": "Private, end-to-end encrypted mail between Polkadot accounts. Messages are sealed to the recipient's key, stored on the Bulletin Chain for about two weeks, and indexed by a contract on Asset Hub; each mailbox lives on the person's own device. Screens: inbox, sent, drafts, trash, read, compose, contacts, settings and a delete-for-good confirmation, each its own page. A clean, quiet mail client that never feels like crypto.",
+  "appMode": "triangle",
+  "type": "custom",
+  "category": "custom",
+  "blockchain": "paseo-asset-hub",
+  "enableContracts": true,
+  "enableSessionWallet": false,
+  "contractSource": "provided",
+  "contractLanguage": "solidity",
+  "providedContracts": [
+    {
+      "name": "PubKeyRegistry",
+      "source": "/home/jamz/workspace/rosarp/w3mail/contracts/contracts/PubKeyRegistry.sol",
+      "language": "solidity"
+    },
+    {
+      "name": "MailboxIndex",
+      "source": "/home/jamz/workspace/rosarp/w3mail/contracts/contracts/MailboxIndex.sol",
+      "language": "solidity"
+    },
+    {
+      "name": "W3bMailRouter",
+      "source": "/home/jamz/workspace/rosarp/w3mail/contracts/contracts/W3bMailRouter.sol",
+      "language": "solidity"
+    }
+  ],
+  "network": "local",
+  "references": [
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/contracts/test",
+      "useFor": "Hardhat tests to port: PubKeyRegistry.test.cjs and W3bMailRouter.test.cjs",
+      "phases": [
+        "CONTRACTS",
+        "TESTING"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/contracts/scripts/deploy.cjs",
+      "useFor": "deploy order and initializer arguments, expressed as deploy.config.json",
+      "phases": [
+        "CONTRACTS"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/infra/zombienet/e2e",
+      "useFor": "roundtrip.mjs and contracts-headless.mjs: the headless send/sync round trip to port to scripts/e2e-roundtrip.js",
+      "phases": [
+        "TESTING"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/src/lib",
+      "useFor": "mail.js, crypto.js and keys.js: onboarding, send, sync and delete flows to reimplement on the factory modules",
+      "phases": [
+        "INTEGRATION"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/src/pages",
+      "useFor": "screen list and layout reference only; rebuild markup from factory components",
+      "phases": [
+        "FRONTEND"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/src/components/mail",
+      "useFor": "mail list, row and reading layout reference only; rebuild from factory components",
+      "phases": [
+        "FRONTEND"
+      ]
+    },
+    {
+      "path": "/home/jamz/workspace/rosarp/w3mail/docs/Design-v2.md",
+      "useFor": "sections 5.1-5.5 (contracts and key lifecycle) and 6 (send, read and delete flows)",
+      "phases": [
+        "FRONTEND",
+        "CONTRACTS",
+        "INTEGRATION",
+        "TESTING"
+      ]
+    }
+  ],
+  "domain": "w3mail-dot",
+  "contractFeatures": {
+    "erc20": false,
+    "erc721": false,
+    "erc1155": false,
+    "ownable": false,
+    "pausable": false,
+    "accessControl": true,
+    "upgradeable": true
+  },
+  "walletType": "host",
+  "wallets": [
+    "triangle-host"
+  ],
+  "features": {
+    "authentication": false,
+    "profiles": false,
+    "assetTransfers": false,
+    "nftMinting": false,
+    "tokenCreation": false,
+    "multiSig": false,
+    "staking": false,
+    "swaps": false,
+    "liquidityPools": false,
+    "marketplace": false,
+    "payments": false,
+    "subscriptions": false,
+    "governance": false,
+    "treasury": false,
+    "proposals": false,
+    "messaging": true,
+    "notifications": false,
+    "socialFeed": false,
+    "analytics": false,
+    "ipfsStorage": false,
+    "indexing": false,
+    "statementStore": false,
+    "bulletinChain": true
+  },
+  "styling": {
+    "designSystem": "tailwind",
+    "layout": "standard",
+    "navigation": "header",
+    "animations": "subtle",
+    "darkMode": false,
+    "responsive": "all",
+    "colorScheme": "polkadot",
+    "fontFamily": "inter",
+    "uiPreset": "modern",
+    "borderRadius": "medium"
+  },
+  "desktop": {
+    "enabled": false
+  },
+  "specFiles": []
+}

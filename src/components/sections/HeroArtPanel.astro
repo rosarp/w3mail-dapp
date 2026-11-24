@@ -1,0 +1,133 @@
+---
+/**
+ * Generative art for a hero's `media` slot: a seed-hashed SVG composition, identical on
+ * every build, themed through `currentColor` and drifting gently when motion is allowed.
+ * Use when the app has no headline metric or live feed to show yet. Default slot
+ * content is centred over the art.
+ *
+ * @typedef {object} Props
+ * @property {string} [seed]  Same seed, same art. Default `app`.
+ * @property {'orbital' | 'lattice' | 'organic' | 'phosphor'} [variant]  Default `orbital`.
+ * @property {string} [class]
+ */
+import { hash32 } from '../../lib/identity.js';
+
+const { seed = 'app', variant = 'orbital', class: className = '' } = Astro.props;
+
+const W = 400;
+const H = 300;
+
+function makeRng(start) {
+  let s = start || 1;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const rng = makeRng(hash32(`${seed}:${variant}`));
+const f = (n) => n.toFixed(1);
+
+function orbital() {
+  const cx = W * (0.32 + rng() * 0.36);
+  const cy = H * (0.32 + rng() * 0.36);
+  const rings = [55, 92, 134, 182].map((r) => r * (0.85 + rng() * 0.3));
+  const dots = rings.flatMap((r, i) =>
+    Array.from({ length: 2 + (i % 2) }, () => {
+      const a = rng() * Math.PI * 2;
+      return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, s: 1.5 + rng() * 3 };
+    }),
+  );
+  const ringSvg = rings
+    .map(
+      (r, i) =>
+        `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity="${(0.16 - i * 0.025).toFixed(3)}"${i % 2 ? ` stroke-dasharray="${f(r * 1.8)} ${f(r * 3.4)}"` : ''}/>`,
+    )
+    .join('');
+  const dotSvg = dots
+    .map((d, i) => `<circle cx="${f(d.x)}" cy="${f(d.y)}" r="${f(d.s)}" fill="currentColor" fill-opacity="${(0.25 + (i % 3) * 0.12).toFixed(2)}"/>`)
+    .join('');
+  return `<g class="motion-safe:animate-[spin_90s_linear_infinite]" style="transform-origin: ${f(cx)}px ${f(cy)}px">${ringSvg}${dotSvg}</g>`;
+}
+
+function lattice() {
+  const step = 28 + Math.floor(rng() * 10);
+  const xs = Array.from({ length: Math.ceil(W / step) + 1 }, (_, i) => i * step);
+  const ys = Array.from({ length: Math.ceil(H / step) + 1 }, (_, i) => i * step);
+  const nodes = Array.from({ length: 10 }, () => ({
+    x: xs[Math.floor(rng() * xs.length)],
+    y: ys[Math.floor(rng() * ys.length)],
+    r: 2 + rng() * 2.5,
+  }));
+  const beam = ys[1 + Math.floor(rng() * (ys.length - 2))];
+  const lines =
+    xs.map((x) => `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="currentColor" stroke-opacity="0.08"/>`).join('') +
+    ys.map((y) => `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="currentColor" stroke-opacity="0.08"/>`).join('');
+  const nodeSvg = nodes.map((n) => `<circle cx="${n.x}" cy="${n.y}" r="${f(n.r)}" fill="currentColor" fill-opacity="0.45"/>`).join('');
+  return `<g>${lines}<line x1="0" y1="${beam}" x2="${W}" y2="${beam}" stroke="currentColor" stroke-opacity="0.3" stroke-width="1.5"/><g class="motion-safe:animate-[pulse_6s_ease-in-out_infinite]">${nodeSvg}</g></g>`;
+}
+
+function blobPath(cx, cy, radius) {
+  const n = 8;
+  const pts = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    const r = radius * (0.7 + rng() * 0.55);
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  });
+  const mid = (a, b) => `${f((a[0] + b[0]) / 2)},${f((a[1] + b[1]) / 2)}`;
+  let d = `M ${mid(pts[n - 1], pts[0])}`;
+  for (let i = 0; i < n; i++) d += ` Q ${f(pts[i][0])},${f(pts[i][1])} ${mid(pts[i], pts[(i + 1) % n])}`;
+  return `${d} Z`;
+}
+
+function organic() {
+  return [0.18, 0.12, 0.07]
+    .map((opacity, i) => {
+      const cx = W * (0.3 + rng() * 0.4);
+      const cy = H * (0.3 + rng() * 0.4);
+      const spin = i % 2 ? 'motion-safe:animate-[spin_140s_linear_infinite_reverse]' : 'motion-safe:animate-[spin_100s_linear_infinite]';
+      return `<g class="${spin}" style="transform-origin: ${f(cx)}px ${f(cy)}px"><path d="${blobPath(cx, cy, 70 + i * 45)}" fill="currentColor" fill-opacity="${opacity}"/></g>`;
+    })
+    .join('');
+}
+
+function phosphor() {
+  const cell = 14;
+  const pixels = [];
+  for (let y = 0; y < H; y += cell) {
+    for (let x = 0; x < W; x += cell) {
+      if (rng() < 0.12) pixels.push({ x, y, o: 0.12 + rng() * 0.4 });
+    }
+  }
+  const scan = Array.from({ length: Math.floor(H / 12) }, (_, i) => i * 12 + 6)
+    .map((y) => `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="currentColor" stroke-opacity="0.05"/>`)
+    .join('');
+  const groups = [0, 1]
+    .map((g) => {
+      const rects = pixels
+        .filter((_, i) => i % 2 === g)
+        .map((p) => `<rect x="${p.x + 2}" y="${p.y + 2}" width="${cell - 4}" height="${cell - 4}" fill="currentColor" fill-opacity="${p.o.toFixed(2)}"/>`)
+        .join('');
+      return `<g class="motion-safe:animate-[pulse_5s_ease-in-out_infinite]" style="animation-delay: ${g * 2.5}s">${rects}</g>`;
+    })
+    .join('');
+  return `<g>${scan}${groups}</g>`;
+}
+
+const art = { lattice, organic, phosphor, orbital }[variant]?.() ?? orbital();
+---
+
+<div class:list={['relative aspect-[4/3] overflow-hidden rounded-xl border bg-surface-2 text-primary shadow-sm', className]}>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    preserveAspectRatio="xMidYMid slice"
+    class="absolute inset-0 h-full w-full"
+    aria-hidden="true"
+    set:html={art}
+  />
+  {Astro.slots.has('default') && (
+    <div class="relative z-10 flex h-full items-center justify-center p-6"><slot /></div>
+  )}
+</div>

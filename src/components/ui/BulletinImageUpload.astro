@@ -1,0 +1,90 @@
+---
+/**
+ * The only correct way to take a user's image: it is downscaled, stored on the
+ * Bulletin Chain, and yields a durable gateway URL. Never save a blob URL.
+ *
+ * Two modes, by where the commit happens:
+ *
+ * - Eager (default), for single-action changes such as a new avatar: uploads on pick
+ *   and dispatches `uploaded` with `{ url, cid }`, or null when cleared. `model`
+ *   binds the stored URL both ways.
+ *
+ *     <BulletinImageUpload model="profile.avatar" />
+ *
+ * - `deferred`, for forms with a Publish button: picking only stages the image with
+ *   a local preview and dispatches `picked` with `{ bytes, previewUrl }`, or null.
+ *   `model` binds that object. The form uploads on submit with `uploadBytes` from
+ *   `lib/bulletin.js`, so nothing is published before the user commits.
+ *
+ *     <BulletinImageUpload deferred model="form.image" />
+ */
+/**
+ * @typedef {object} Props
+ * @property {boolean} [deferred]
+ * @property {string} [model]  Alpine path bound with x-model.
+ * @property {number} [maxDimension]  Longest edge before upload; default 1280.
+ * @property {string} [class]
+ */
+import Icon from './Icon.astro';
+import LogoSpinner from './LogoSpinner.astro';
+
+const { deferred = false, model, maxDimension = 1280, class: className } = Astro.props;
+const modelAttrs = model ? { 'x-modelable': 'value', 'x-model': model } : {};
+---
+
+<div x-data={`bulletinImageUpload(${deferred}, ${maxDimension})`} {...modelAttrs} class:list={['space-y-2', className]}>
+  <input x-ref="file" type="file" accept="image/*" class="sr-only" x-on:change="pick($event.target.files?.[0])" />
+
+  <template x-if="shown">
+    <div class="relative aspect-[4/3] overflow-hidden rounded-xl border bg-surface-2 shadow-sm">
+      <img x-bind:src="shown" alt="Selected image" class="h-full w-full object-cover" />
+      {
+        deferred && (
+          <span class="absolute top-3 left-3 rounded-full bg-surface/80 px-2.5 py-1 text-xs text-fg-muted backdrop-blur-md">
+            Image added — publish to save
+          </span>
+        )
+      }
+      <button
+        type="button"
+        aria-label="Remove image"
+        x-on:click="clear()"
+        class="absolute top-3 right-3 grid size-8 cursor-pointer place-items-center rounded-full bg-surface/90 text-fg shadow-lg transition-opacity hover:opacity-80"
+      >
+        <Icon name="x" class="size-3.5" />
+      </button>
+    </div>
+  </template>
+
+  <div
+    x-show="!shown"
+    role="button"
+    tabindex="0"
+    x-on:click="$refs.file.click()"
+    x-on:keydown.enter.prevent="$refs.file.click()"
+    x-on:keydown.space.prevent="$refs.file.click()"
+    x-on:dragover.prevent="dragging = true"
+    x-on:dragleave="dragging = false"
+    x-on:drop.prevent="dragging = false; pick($event.dataTransfer.files?.[0])"
+    class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed text-center transition-colors"
+    x-bind:class="dragging ? 'border-primary bg-primary-soft' : 'bg-surface-2 hover:border-primary/50'"
+  >
+    <template x-if="uploading">
+      <div class="flex flex-col items-center gap-3">
+        <LogoSpinner size="lg" class="text-primary" />
+        <p class="text-sm text-fg-muted">Storing on the Bulletin Chain…</p>
+      </div>
+    </template>
+    <template x-if="!uploading">
+      <div class="flex flex-col items-center gap-3">
+        <Icon name="image" class="size-7 text-fg-subtle" />
+        <div>
+          <p class="text-sm font-medium text-fg">Drop an image here</p>
+          <p class="text-xs text-fg-subtle">{deferred ? 'or click to browse' : 'or click to browse — stored on-chain'}</p>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <p class="text-xs text-danger" x-show="error" x-text="error" x-cloak></p>
+</div>

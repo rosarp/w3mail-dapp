@@ -1,0 +1,21 @@
+---
+/**
+ * A balance readout. Defaults to the connected account's free balance;
+ * `amountExpr` is any Alpine expression yielding planck as a bigint.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [amountExpr]  Default `$store.wallet.balance`.
+ * @property {number} [decimals]  10 for PAS (default), 18 for EVM tokens.
+ * @property {string} [symbol]
+ * @property {string} [class]
+ */
+
+const { amountExpr = '$store.wallet.balance', decimals = 10, symbol = 'PAS', class: className } = Astro.props;
+---
+
+<span
+  x-data={`balanceDisplay(() => ${amountExpr}, ${decimals}, ${JSON.stringify(symbol)})`}
+  x-text="text"
+  class:list={['font-mono tabular text-fg', className]}
+></span>

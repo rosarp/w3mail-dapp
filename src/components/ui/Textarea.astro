@@ -1,0 +1,68 @@
+---
+/**
+ * A labelled multi-line input. Same contract as `Input`; with `maxlength` and
+ * `showCount`, a live character count sits beside the label. The count reads the
+ * textarea itself, so it works with or without `x-model`.
+ */
+/**
+ * @typedef {object} Props
+ * @property {string} [label]
+ * @property {string} [hint]
+ * @property {string} [error]
+ * @property {string} [errorExpr]  Alpine expression yielding a message or "".
+ * @property {boolean} [showCount]
+ * @property {number} [maxlength]
+ * @property {number} [rows]
+ * @property {string} [id]
+ * @property {string} [name]
+ * @property {string} [class]
+ * @property {unknown} [key] Extra attributes are spread onto the textarea.
+ */
+
+const { label, hint, error, errorExpr, showCount = false, maxlength, rows = 4, class: className, id, name, ...rest } = Astro.props;
+const inputId = id ?? (name ? `field-${name}` : undefined);
+const descId = inputId ? `${inputId}-desc` : undefined;
+const counting = showCount && maxlength != null;
+const invalidAttrs = errorExpr ? { 'x-bind:aria-invalid': `!!(${errorExpr}) || undefined` } : {};
+---
+
+<div class:list={['grid gap-1.5', className]} x-data="{ charCount: 0 }">
+  {
+    (label || counting) && (
+      <div class="flex items-center justify-between">
+        {label && <label for={inputId} class="text-xs font-medium text-fg">{label}</label>}
+        {counting && (
+          <span class="text-xs tabular" x-bind:class={`charCount >= ${maxlength} ? 'text-danger' : 'text-fg-subtle'`}>
+            <span x-text="charCount">0</span>/{maxlength}
+          </span>
+        )}
+      </div>
+    )
+  }
+  <textarea
+    id={inputId}
+    name={name}
+    rows={rows}
+    maxlength={maxlength}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={error || hint || errorExpr ? descId : undefined}
+    x-init="charCount = $el.value.length"
+    x-on:input="charCount = $el.value.length"
+    class:list={[
+      'w-full resize-y rounded-lg border border-border-strong/70 bg-surface px-3 py-2 text-sm text-fg shadow-sm',
+      'placeholder:text-fg-subtle transition-colors',
+      'focus:border-ring focus:ring-3 focus:ring-ring/20 focus:outline-none',
+      'disabled:cursor-not-allowed disabled:opacity-60',
+      'aria-invalid:border-danger aria-invalid:focus:ring-danger/20',
+    ]}
+    {...invalidAttrs}
+    {...rest}
+  ></textarea>
+  {
+    errorExpr ? (
+      <p id={descId} class="text-xs" x-bind:class={`(${errorExpr}) ? 'text-danger' : 'text-fg-subtle'`} x-text={`(${errorExpr}) || ${JSON.stringify(hint ?? '')}`}>{hint}</p>
+    ) : (
+      (error || hint) && <p id={descId} class:list={['text-xs', error ? 'text-danger' : 'text-fg-subtle']}>{error ?? hint}</p>
+    )
+  }
+</div>

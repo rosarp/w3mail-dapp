@@ -1,0 +1,19 @@
+---
+/**
+ * Call-to-action band on a brand-tinted surface — one of the few places centring is
+ * right. Actions go in the default slot. Pair with `<Section bleed>` to break the page
+ * rhythm.
+ *
+ * @typedef {object} Props
+ * @property {string} title
+ * @property {string} [description]
+ * @property {string} [class]
+ */
+const { title, description, class: className = '' } = Astro.props;
+---
+
+<div class:list={['rounded-xl bg-primary-soft px-6 py-12 text-center md:px-12 md:py-16', className]}>
+  <h2 class="font-display text-2xl font-semibold tracking-tight text-fg md:text-3xl">{title}</h2>
+  {description && <p class="mx-auto mt-3 max-w-prose text-lg text-fg-muted">{description}</p>}
+  {Astro.slots.has('default') && <div class="mt-7 flex flex-wrap items-center justify-center gap-3"><slot /></div>}
+</div>

@@ -1,0 +1,41 @@
+---
+import '../styles/global.css';
+import { SITE } from '../lib/site.js';
+import Header from '../components/shell/Header.astro';
+import Toaster from '../components/ui/Toaster.astro';
+import TxToaster from '../components/shell/TxToaster.astro';
+
+/**
+ * The document every page renders into: theme bootstrap, header, and the app-wide
+ * notices (toasts and transaction status).
+ *
+ * @typedef {object} Props
+ * @property {string} [title]  Page title; the app name is appended.
+ * @property {string} [description]
+ * @property {boolean} [chrome]  Render the header. Default true.
+ * @property {string} [bodyClass]
+ */
+
+const { title, description = SITE.description, chrome = true, bodyClass } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+---
+
+<!doctype html>
+<html lang="en" data-theme={SITE.defaultTheme} data-default-theme={SITE.defaultTheme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
+    <script is:inline src="/theme.js"></script>
+  </head>
+  <body class:list={['min-h-dvh', bodyClass]}>
+    {chrome && <Header />}
+    <slot />
+    <Toaster />
+    <TxToaster />
+  </body>
+</html>

@@ -1,0 +1,43 @@
+---
+/**
+ * Alternating feature rows — text on one side, a visual on the other, flipping each
+ * row. Reads as editorial rather than another card grid. Row visuals go in slots named
+ * `media-0`, `media-1`, … matching each feature's index.
+ *
+ *   <FeatureRows features={[{ title: 'Own your data', description: '…', icon: 'shield' }]}>
+ *     <StockImage slot="media-0" … />
+ *   </FeatureRows>
+ *
+ * @typedef {object} Feature
+ * @property {string} title
+ * @property {string} description
+ * @property {string} [icon]  Lucide name.
+ *
+ * @typedef {object} Props
+ * @property {Feature[]} features
+ * @property {string} [class]
+ */
+import Icon from '../ui/Icon.astro';
+
+const { features, class: className = '' } = Astro.props;
+const media = await Promise.all(
+  features.map((_, i) => (Astro.slots.has(`media-${i}`) ? Astro.slots.render(`media-${i}`) : null)),
+);
+---
+
+<div class:list={['space-y-16 md:space-y-24', className]}>
+  {features.map((f, i) => (
+    <div class="grid items-center gap-8 md:grid-cols-2 lg:gap-16">
+      <div class:list={['animate-rise', i % 2 === 1 && 'md:order-2']}>
+        {f.icon && (
+          <div class="mb-4 inline-flex rounded-lg bg-primary-soft p-3 text-primary">
+            <Icon name={f.icon} class="size-5" />
+          </div>
+        )}
+        <h3 class="font-display text-2xl font-semibold tracking-tight text-fg">{f.title}</h3>
+        <p class="mt-3 text-lg text-fg-muted">{f.description}</p>
+      </div>
+      {media[i] && <div class:list={[i % 2 === 1 && 'md:order-1']} set:html={media[i]} />}
+    </div>
+  ))}
+</div>

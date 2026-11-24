@@ -1,0 +1,28 @@
+---
+/**
+ * Immersive hero: `media` fills the band and the headline sits bottom-left over a
+ * legibility scrim. For image-led apps; always fill `media`, ideally with a dark image,
+ * so the light overlay text stays readable. Actions go in the `actions` slot.
+ *
+ * @typedef {object} Props
+ * @property {string} title  Use the `title` slot instead for rich markup.
+ * @property {string} [eyebrow]
+ * @property {string} [description]
+ * @property {string} [minHeight]  Tailwind min-height class, default `min-h-[420px]`.
+ * @property {string} [class]
+ */
+const { title, eyebrow, description, minHeight = 'min-h-[420px]', class: className = '' } = Astro.props;
+---
+
+<div class:list={['relative overflow-hidden rounded-xl', className]}>
+  {Astro.slots.has('media') && <div class="absolute inset-0"><slot name="media" /></div>}
+  <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent"></div>
+  <div class:list={['relative z-10 flex animate-rise flex-col justify-end p-8 md:p-12', minHeight]}>
+    {eyebrow && <p class="mb-3 text-xs font-medium tracking-wider text-white/80 uppercase">{eyebrow}</p>}
+    <h1 class="max-w-2xl font-display text-4xl leading-tight font-semibold tracking-tight text-white md:text-5xl">
+      {Astro.slots.has('title') ? <slot name="title" /> : title}
+    </h1>
+    {description && <p class="mt-4 max-w-xl text-lg text-white/85">{description}</p>}
+    {Astro.slots.has('actions') && <div class="mt-6 flex flex-wrap items-center gap-3"><slot name="actions" /></div>}
+  </div>
+</div>

@@ -1,0 +1,66 @@
+---
+/**
+ * Vertical timeline with a connecting rail — the right shape for sequential data
+ * (mints, votes, transactions) instead of a card grid.
+ *
+ *   <Timeline entries={[{ title: 'Minted', meta: '2h ago', icon: 'sparkles' }]} />
+ *   <Timeline entries="$store.activity.items" empty="No activity yet" />
+ *
+ * Runtime entries render title, meta and description as text; icons are build-time only.
+ *
+ * @typedef {object} Entry
+ * @property {string} title
+ * @property {string} [meta]  Timestamp or status, right-aligned.
+ * @property {string} [description]
+ * @property {string} [icon]  Lucide name.
+ *
+ * @typedef {object} Props
+ * @property {Entry[] | string} entries  Entries, or an Alpine expression for them.
+ * @property {string} [empty]  Text shown when there are no runtime entries.
+ * @property {string} [class]
+ */
+import Icon from '../ui/Icon.astro';
+
+const { entries, empty = 'Nothing here yet', class: className = '' } = Astro.props;
+const live = typeof entries === 'string';
+const dot = 'relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary';
+---
+
+{live ? (
+  <div class={className} x-data={`{ get entries() { const e = (${entries}); return Array.isArray(e) ? e : []; } }`}>
+    <p class="py-6 text-center text-sm text-fg-subtle" x-show="entries.length === 0" x-cloak>{empty}</p>
+    <ol class="relative space-y-6" x-show="entries.length > 0">
+      <span class="absolute top-2 bottom-2 left-[15px] border-l" aria-hidden="true"></span>
+      <template x-for="(e, i) in entries" x-bind:key="i">
+        <li class="relative flex animate-rise gap-4">
+          <span class={dot}><span class="size-2 rounded-full bg-primary"></span></span>
+          <div class="min-w-0 flex-1 pt-1">
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="font-medium text-fg" x-text="e.title"></div>
+              <span class="shrink-0 text-xs text-fg-subtle" x-show="e.meta" x-text="e.meta"></span>
+            </div>
+            <div class="mt-1 text-sm text-fg-muted" x-show="e.description" x-text="e.description"></div>
+          </div>
+        </li>
+      </template>
+    </ol>
+  </div>
+) : (
+  <ol class:list={['relative space-y-6', className]}>
+    <span class="absolute top-2 bottom-2 left-[15px] border-l" aria-hidden="true"></span>
+    {entries.map((e) => (
+      <li class="relative flex gap-4">
+        <span class={dot}>
+          {e.icon ? <Icon name={e.icon} class="size-4" /> : <span class="size-2 rounded-full bg-primary"></span>}
+        </span>
+        <div class="min-w-0 flex-1 pt-1">
+          <div class="flex items-baseline justify-between gap-2">
+            <div class="font-medium text-fg">{e.title}</div>
+            {e.meta && <span class="shrink-0 text-xs text-fg-subtle">{e.meta}</span>}
+          </div>
+          {e.description && <div class="mt-1 text-sm text-fg-muted">{e.description}</div>}
+        </div>
+      </li>
+    ))}
+  </ol>
+)}
