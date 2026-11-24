@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import MailFolder from '../components/mail/MailFolder.astro';
+---
+
+<Layout title="Inbox">
+  <MailShell>
+    <MailFolder
+      folder="inbox"
+      title="Inbox"
+      description="New mail arrives within a few blocks of being sent."
+      emptyTitle="No mail yet"
+      emptyDescription="When someone writes to you, it shows up here. Share your address so people can reach you."
+      emptyIcon="inbox"
+    />
+  </MailShell>
+</Layout>

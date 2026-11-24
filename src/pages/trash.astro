@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import MailFolder from '../components/mail/MailFolder.astro';
+---
+
+<Layout title="Trash">
+  <MailShell>
+    <MailFolder
+      folder="trash"
+      title="Trash"
+      description="Messages you moved out of the way."
+      emptyTitle="Trash is empty"
+      emptyDescription="Messages you move to trash wait here until you restore them or delete them for good."
+      emptyIcon="trash-2"
+    />
+  </MailShell>
+</Layout>

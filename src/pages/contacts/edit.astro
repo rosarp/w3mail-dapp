@@ -1,0 +1,87 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MailShell from '../../components/mail/MailShell.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import Input from '../../components/ui/Input.astro';
+import Alert from '../../components/ui/Alert.astro';
+import Skeleton from '../../components/ui/Skeleton.astro';
+import Icon from '../../components/ui/Icon.astro';
+import AddressAvatar from '../../components/ui/AddressAvatar.astro';
+---
+
+<Layout title="Contact">
+  <MailShell>
+    <div x-data="contactEditPage" class="mx-auto max-w-xl animate-rise">
+      <a x-bind:href="backHref" href="/contacts/" class="inline-flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
+        <Icon name="chevron-left" class="size-4" />
+        Back
+      </a>
+
+      <h1 class="mt-3 font-display text-3xl font-semibold tracking-tight text-fg" x-text="isNew ? 'Add contact' : 'Edit contact'">
+        Contact
+      </h1>
+
+      <div x-show="loading" class="mt-6">
+        <Card class="space-y-5">
+          <Skeleton class="h-10 w-full" />
+          <Skeleton class="h-10 w-full" />
+        </Card>
+      </div>
+
+      <form x-show="!loading" x-cloak class="mt-6" x-on:submit.prevent="save()" novalidate>
+        <Card>
+          <div class="space-y-5">
+            <Input
+              label="Name"
+              name="name"
+              autocomplete="off"
+              maxlength={80}
+              x-model="form.name"
+              x-on:blur="validate('name')"
+              errorExpr="errors.name"
+            />
+            <div>
+              <Input
+                label="Address"
+                name="address"
+                placeholder="A Polkadot address"
+                autocomplete="off"
+                spellcheck="false"
+                x-model.trim="form.address"
+                x-on:blur="validate('address')"
+                errorExpr="errors.address"
+              />
+              <div class="mt-2 flex items-center gap-2" x-show="preview" x-cloak>
+                <AddressAvatar addressExpr="preview" size={20} />
+                <span class="text-xs text-fg-muted">Looks right</span>
+              </div>
+            </div>
+          </div>
+
+          <template x-if="error">
+            <Alert tone="danger" class="mt-5"><span x-text="error"></span></Alert>
+          </template>
+
+          <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
+            <Button variant="ghost" icon="trash-2" class="text-danger" x-show="!isNew" x-on:click="remove()" x-bind:disabled="saving">
+              Remove contact
+            </Button>
+            <span x-show="isNew"></span>
+            <div class="flex gap-2">
+              <Button x-bind:href="backHref" href="/contacts/" variant="outline">Cancel</Button>
+              <Button type="submit" icon="check" loading="saving">Save</Button>
+            </div>
+          </div>
+        </Card>
+      </form>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { contactEditPage } from '../../lib/pages/contactEdit.js';
+
+  Alpine.data('contactEditPage', contactEditPage);
+</script>

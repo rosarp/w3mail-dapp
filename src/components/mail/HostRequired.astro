@@ -1,0 +1,19 @@
+---
+import EmptyState from '../ui/EmptyState.astro';
+import Card from '../ui/Card.astro';
+
+/**
+ * What every screen shows outside the Polkadot app: the mailbox needs the account the
+ * app provides.
+ *
+ * @typedef {object} Props
+ */
+---
+
+<Card class="mx-auto max-w-xl animate-rise">
+  <EmptyState
+    icon="smartphone"
+    title="Open w3mail in the Polkadot app"
+    description="Your mailbox belongs to your Polkadot account. Open this page in the Polkadot app to read and send private mail."
+  />
+</Card>

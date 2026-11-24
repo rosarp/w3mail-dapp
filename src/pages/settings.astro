@@ -1,0 +1,124 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import PageHeader from '../components/sections/PageHeader.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Badge from '../components/ui/Badge.astro';
+import Alert from '../components/ui/Alert.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import Icon from '../components/ui/Icon.astro';
+import CopyButton from '../components/ui/CopyButton.astro';
+import AddressAvatar from '../components/ui/AddressAvatar.astro';
+import { SITE } from '../lib/site.js';
+
+const devChain = SITE.chain === 'local';
+---
+
+<Layout title="Settings">
+  <MailShell>
+    <div x-data="settingsPage" class="animate-fade-in">
+      <PageHeader title="Settings" description="Your account, your mailbox key and how this device keeps your mail." />
+
+      <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <Card title="Account" class="lg:row-span-2">
+          <div class="flex items-center gap-4">
+            <AddressAvatar addressExpr="$store.wallet.address" size={56} />
+            <div class="min-w-0">
+              <p class="truncate text-lg font-semibold text-fg" x-text="$store.wallet.displayName || 'Your account'"></p>
+              {
+                devChain && (
+                  <p class="mt-0.5 text-sm text-fg-muted">
+                    Test account on this development network.
+                    <a href="/dev-account/?return=/settings/" class="font-medium text-primary hover:underline">
+                      Switch account
+                    </a>
+                  </p>
+                )
+              }
+            </div>
+          </div>
+
+          <dl class="mt-6 space-y-4 text-sm">
+            <div>
+              <dt class="text-xs font-medium tracking-wider text-fg-subtle uppercase">Address</dt>
+              <dd class="mt-1 flex items-center gap-2">
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-fg" x-text="$store.wallet.address || '–'"></span>
+                <CopyButton valueExpr="$store.wallet.address || ''" label="Copy address" />
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium tracking-wider text-fg-subtle uppercase">H160 address</dt>
+              <dd class="mt-1 flex items-center gap-2">
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-fg" x-text="$store.wallet.h160 || '–'"></span>
+                <CopyButton valueExpr="$store.wallet.h160 || ''" label="Copy H160 address" />
+              </dd>
+            </div>
+          </dl>
+          <p class="mt-6 text-xs text-fg-subtle">Share either address so people can write to you.</p>
+        </Card>
+
+        <Card title="Mailbox key">
+          <div x-show="key === 'loading'"><Skeleton class="h-6 w-1/2" /></div>
+          <div x-show="key !== 'loading'" x-cloak class="space-y-3">
+            <div class="flex items-center gap-2">
+              <span x-show="key === 'registered'"><Badge tone="success" dot>Registered</Badge></span>
+              <span x-show="key === 'unregistered'"><Badge tone="warning" dot>Not registered</Badge></span>
+              <span x-show="key === 'changed'"><Badge tone="danger" dot>Changed</Badge></span>
+              <span x-show="key === 'unavailable'"><Badge tone="neutral" dot>Not reachable</Badge></span>
+            </div>
+            <p class="text-sm text-fg-muted" x-text="keyText"></p>
+            <template x-if="keyError">
+              <Alert tone="danger"><span x-text="keyError"></span></Alert>
+            </template>
+            <Button
+              variant="outline"
+              size="sm"
+              icon="key-round"
+              loading="registering"
+              x-show="key !== 'unavailable'"
+              x-on:click="register()"
+            >
+              <span x-text="key === 'registered' ? 'Register again' : 'Register key'">Register key</span>
+            </Button>
+          </div>
+        </Card>
+
+        <Card title="Storage and sync">
+          <div class="space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-medium text-fg">Message storage</p>
+                <p class="mt-0.5 text-sm text-fg-muted" x-text="storageGranted ? 'Allowed. Sending will not ask again.' : 'Asked for the first time you send.'"></p>
+              </div>
+              <span x-show="storageGranted"><Badge tone="success" dot>Allowed</Badge></span>
+              <span x-show="!storageGranted">
+                <Button variant="outline" size="sm" loading="allowing" x-on:click="allowStorage()">Allow now</Button>
+              </span>
+            </div>
+            <div class="flex items-start justify-between gap-4 border-t pt-5">
+              <div>
+                <p class="text-sm font-medium text-fg">Last sync</p>
+                <p class="mt-0.5 flex items-center gap-1.5 text-sm text-fg-muted">
+                  <Icon name="clock" class="size-3.5" />
+                  <span x-text="lastSyncedLabel">Not synced yet</span>
+                </p>
+              </div>
+              <Button variant="outline" size="sm" icon="refresh-cw" loading="syncing" x-on:click="syncNow()">Sync now</Button>
+            </div>
+            <template x-if="syncError">
+              <Alert tone="danger"><span x-text="syncError"></span></Alert>
+            </template>
+          </div>
+        </Card>
+      </div>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { settingsPage } from '../lib/pages/settings.js';
+
+  Alpine.data('settingsPage', settingsPage);
+</script>

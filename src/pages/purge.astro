@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Alert from '../components/ui/Alert.astro';
+import EmptyState from '../components/ui/EmptyState.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import Icon from '../components/ui/Icon.astro';
+---
+
+<Layout title="Delete for good">
+  <MailShell>
+    <div x-data="purgePage" class="mx-auto max-w-xl animate-rise py-4">
+      <div x-show="loading">
+        <Card class="space-y-4">
+          <Skeleton class="h-6 w-2/3" />
+          <Skeleton class="h-4 w-full" />
+          <Skeleton class="h-16 w-full" />
+        </Card>
+      </div>
+
+      <div x-show="!loading && !msg" x-cloak>
+        <Card>
+          <EmptyState icon="mail-question" title="This message is already gone" description="There is nothing left to delete.">
+            <Button x-bind:href="backHref" href="/trash/" variant="outline" icon="chevron-left">Back</Button>
+          </EmptyState>
+        </Card>
+      </div>
+
+      <div x-show="!loading && msg" x-cloak>
+        <Card>
+          <span class="grid size-11 place-items-center rounded-xl bg-danger-soft text-danger">
+            <Icon name="trash-2" class="size-5" />
+          </span>
+          <h1 class="mt-5 font-display text-2xl font-semibold tracking-tight text-fg">Delete this message for good?</h1>
+          <p class="mt-2 text-sm text-fg-muted">
+            It is removed from your mailbox on chain and from this device. This cannot be undone.
+          </p>
+
+          <div class="mt-5 rounded-lg border bg-surface-2 px-4 py-3">
+            <p class="truncate text-sm font-medium text-fg" x-text="subject"></p>
+            <p class="mt-0.5 truncate text-xs text-fg-subtle" x-text="detail"></p>
+          </div>
+
+          <template x-if="error">
+            <Alert tone="danger" class="mt-5"><span x-text="error"></span></Alert>
+          </template>
+
+          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button x-bind:href="backHref" href="/trash/" variant="outline" x-bind:aria-disabled="deleting ? 'true' : null">
+              Cancel
+            </Button>
+            <Button variant="danger" icon="trash-2" loading="deleting" x-on:click="confirm()">Delete</Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { purgePage } from '../lib/pages/purge.js';
+
+  Alpine.data('purgePage', purgePage);
+</script>

@@ -28,6 +28,8 @@ import { reactionBar, burstMagic } from './components/reactionBar.js';
 import { reveal } from './components/section.js';
 import { sparkline } from './components/sparkline.js';
 import { txButton } from './components/txButton.js';
+import { mailFolder } from './components/mailFolder.js';
+import { flashStore } from './flash.js';
 
 /**
  * Alpine entrypoint, wired in astro.config.mjs. Runs once per page load.
@@ -61,11 +63,13 @@ export default (Alpine) => {
   });
 
   /* domain-stores:start */
+  Alpine.store('flash', flashStore());
   /* domain-stores:end */
 
   registerComponents(Alpine);
 
   /* domain-components:start */
+  Alpine.data('mailFolder', mailFolder);
   /* domain-components:end */
 
   reportUncaught(() => /** @type {import('./toasts.js').ToastStore} */ (Alpine.store('toasts')));

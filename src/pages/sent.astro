@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import MailFolder from '../components/mail/MailFolder.astro';
+---
+
+<Layout title="Sent">
+  <MailShell>
+    <MailFolder
+      folder="sent"
+      title="Sent"
+      description="Everything you have sent from this device."
+      emptyTitle="Nothing sent yet"
+      emptyDescription="Messages you send are kept here, on this device."
+      emptyIcon="send"
+    />
+  </MailShell>
+</Layout>

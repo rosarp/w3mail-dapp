@@ -1,13 +1,208 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import PageLayout from '../components/shell/PageLayout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import HostRequired from '../components/mail/HostRequired.astro';
+import AtmosphericBackground from '../components/sections/AtmosphericBackground.astro';
+import BentoGrid from '../components/sections/BentoGrid.astro';
+import BentoItem from '../components/sections/BentoItem.astro';
+import Section from '../components/sections/Section.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Alert from '../components/ui/Alert.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import Icon from '../components/ui/Icon.astro';
 import LogoSpinner from '../components/ui/LogoSpinner.astro';
 ---
 
-<Layout>
-  <PageLayout>
-    <div class="flex min-h-[50vh] items-center justify-center">
-      <LogoSpinner size="lg" />
+<Layout title="Mailbox">
+  <MailShell gate={false}>
+    <div x-data="homePage">
+      <AtmosphericBackground variant="mesh" class="-mx-4 rounded-2xl px-4 sm:-mx-8 sm:px-8">
+        <div class="grid items-center gap-10 py-10 md:py-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          <div class="animate-rise">
+            <p class="mb-3 text-xs font-medium tracking-wider text-primary uppercase">Private mail</p>
+            <h1 class="max-w-xl font-display text-4xl leading-tight font-semibold tracking-tight text-fg md:text-5xl">
+              Mail that only the person you write to can read.
+            </h1>
+            <p class="mt-4 max-w-lg text-base text-fg-muted">
+              Every message is locked to the recipient before it leaves your device. Your mailbox lives here, with
+              you, not with a mail provider.
+            </p>
+            <ul class="mt-8 grid max-w-lg gap-3 text-sm text-fg-muted sm:grid-cols-3">
+              <li class="flex items-center gap-2"><Icon name="lock" class="size-4 text-primary" />Sealed to them</li>
+              <li class="flex items-center gap-2"><Icon name="smartphone" class="size-4 text-primary" />Kept on your device</li>
+              <li class="flex items-center gap-2"><Icon name="timer" class="size-4 text-primary" />Delivered in seconds</li>
+            </ul>
+          </div>
+
+          <div class="animate-slide-in">
+            <div x-show="$store.wallet.mode === 'host-required'" x-cloak>
+              <HostRequired />
+            </div>
+
+            <div x-show="$store.wallet.mode !== 'host-required'">
+              <div x-show="status === 'loading'">
+                <Card class="space-y-4">
+                  <Skeleton class="h-4 w-1/3" />
+                  <Skeleton class="h-10 w-1/2" />
+                  <Skeleton class="h-4 w-2/3" />
+                  <Skeleton class="h-10 w-full" />
+                </Card>
+              </div>
+
+              <div x-show="status === 'unavailable'" x-cloak>
+                <Card>
+                  <div class="flex items-start gap-4">
+                    <LogoSpinner size="sm" class="mt-0.5 text-primary" />
+                    <div>
+                      <h2 class="text-base font-semibold text-fg">Mail is getting ready</h2>
+                      <p class="mt-1 text-sm text-fg-muted">
+                        The mail service is not reachable yet. This page checks again on its own; you can also try now.
+                      </p>
+                      <Button variant="outline" size="sm" icon="refresh-cw" class="mt-4" x-on:click="refresh()">
+                        Try again
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div x-show="status === 'setup'" x-cloak>
+                <Card title="Set up your mailbox" description="One step, once. After that, people can write to you.">
+                  <ol class="space-y-4">
+                    <li class="flex gap-3">
+                      <span
+                        class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold"
+                        x-bind:class="accountReady ? 'bg-success-soft text-success' : 'bg-surface-2 text-fg-muted'"
+                      >
+                        <Icon name="check" class="size-4" x-show="accountReady" />
+                        <span x-show="!accountReady">1</span>
+                      </span>
+                      <div>
+                        <p class="text-sm font-medium text-fg">Your account</p>
+                        <p class="text-sm text-fg-muted">
+                          The Polkadot app provides it. There is nothing to sign in to.
+                        </p>
+                      </div>
+                    </li>
+                    <li class="flex gap-3">
+                      <span
+                        class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold"
+                        x-bind:class="registering ? 'bg-primary-soft text-primary' : 'bg-surface-2 text-fg-muted'"
+                      >
+                        <LogoSpinner size="sm" class="size-4" x-show="registering" />
+                        <span x-show="!registering">2</span>
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium text-fg" x-text="keyChanged ? 'Register your mailbox key again' : 'Register your mailbox key'">
+                          Register your mailbox key
+                        </p>
+                        <p class="text-sm text-fg-muted" x-show="!keyChanged">
+                          Publishes the lock others use to seal messages to you. The Polkadot app asks you to approve it
+                          once.
+                        </p>
+                        <p class="text-sm text-fg-muted" x-show="keyChanged" x-cloak>
+                          The key on record does not match this device. Register again so new messages open here.
+                        </p>
+                      </div>
+                    </li>
+                  </ol>
+
+                  <template x-if="error">
+                    <Alert tone="danger" class="mt-5"><span x-text="error"></span></Alert>
+                  </template>
+
+                  <Button
+                    block
+                    icon="key-round"
+                    class="mt-6"
+                    loading="registering"
+                    x-bind:disabled="!accountReady"
+                    x-on:click="register()"
+                  >
+                    Set up mailbox
+                  </Button>
+                </Card>
+              </div>
+
+              <div x-show="status === 'ready'" x-cloak>
+                <Card>
+                  <p class="flex items-center gap-2 text-sm font-medium text-success">
+                    <Icon name="circle-check" class="size-4" />
+                    Your mailbox is ready
+                  </p>
+                  <p class="mt-5 font-display text-5xl font-semibold tracking-tight text-fg" x-text="counts.unread">0</p>
+                  <p class="text-sm text-fg-muted" x-text="counts.unread === 1 ? 'unread message' : 'unread messages'">
+                    unread messages
+                  </p>
+                  <div class="mt-6 flex flex-wrap gap-2">
+                    <Button href="/inbox/" icon="inbox">Open inbox</Button>
+                    <Button href="/compose/?return=/" variant="outline" icon="pen-line">Compose</Button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </AtmosphericBackground>
+
+      <Section spacing="tight" width="full" class="px-0">
+        <BentoGrid>
+          <BentoItem featured href="/inbox/">
+            <div class="flex h-full flex-col justify-between gap-8">
+              <span class="grid size-10 place-items-center rounded-lg bg-primary-soft text-primary">
+                <Icon name="inbox" class="size-5" />
+              </span>
+              <div>
+                <p class="font-display text-4xl font-semibold text-fg" x-text="counts.inbox">0</p>
+                <p class="mt-1 text-sm font-medium text-fg">Inbox</p>
+                <p class="mt-1 text-sm text-fg-muted">
+                  <span x-text="counts.unread">0</span> unread. New mail arrives within a few blocks.
+                </p>
+              </div>
+            </div>
+          </BentoItem>
+          <BentoItem href="/sent/">
+            <Icon name="send" class="size-5 text-fg-subtle" />
+            <p class="mt-4 text-2xl font-semibold text-fg" x-text="counts.sent">0</p>
+            <p class="text-sm text-fg-muted">Sent</p>
+          </BentoItem>
+          <BentoItem href="/drafts/">
+            <Icon name="file-pen-line" class="size-5 text-fg-subtle" />
+            <p class="mt-4 text-2xl font-semibold text-fg" x-text="counts.drafts">0</p>
+            <p class="text-sm text-fg-muted">Drafts</p>
+          </BentoItem>
+          <BentoItem href="/contacts/">
+            <Icon name="users" class="size-5 text-fg-subtle" />
+            <p class="mt-4 text-2xl font-semibold text-fg" x-text="counts.contacts">0</p>
+            <p class="text-sm text-fg-muted">Contacts</p>
+          </BentoItem>
+          <BentoItem href="/trash/">
+            <Icon name="trash-2" class="size-5 text-fg-subtle" />
+            <p class="mt-4 text-2xl font-semibold text-fg" x-text="counts.trash">0</p>
+            <p class="text-sm text-fg-muted">Trash</p>
+          </BentoItem>
+          <BentoItem wide href="/settings/">
+            <div class="flex items-start gap-4">
+              <Icon name="shield-check" class="mt-0.5 size-5 shrink-0 text-fg-subtle" />
+              <div>
+                <p class="text-sm font-medium text-fg">Messages keep for about two weeks</p>
+                <p class="mt-1 text-sm text-fg-muted">
+                  Once your mailbox has picked a message up, it stays on this device. Open w3mail now and then so
+                  nothing expires before it arrives.
+                </p>
+              </div>
+            </div>
+          </BentoItem>
+        </BentoGrid>
+      </Section>
     </div>
-  </PageLayout>
+  </MailShell>
 </Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { homePage } from '../lib/pages/home.js';
+
+  Alpine.data('homePage', homePage);
+</script>

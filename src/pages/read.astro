@@ -1,0 +1,132 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Alert from '../components/ui/Alert.astro';
+import Badge from '../components/ui/Badge.astro';
+import EmptyState from '../components/ui/EmptyState.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import Icon from '../components/ui/Icon.astro';
+import AddressAvatar from '../components/ui/AddressAvatar.astro';
+---
+
+<Layout title="Message">
+  <MailShell>
+    <div x-data="readPage" class="animate-fade-in">
+      <a x-bind:href="backHref" href="/inbox/" class="inline-flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
+        <Icon name="chevron-left" class="size-4" />
+        <span x-text="backLabel">Back</span>
+      </a>
+
+      <div x-show="loading" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <Card class="space-y-4">
+          <Skeleton class="h-7 w-2/3" />
+          <Skeleton class="h-4 w-1/3" />
+          <Skeleton class="h-32 w-full" />
+        </Card>
+        <Card class="space-y-3">
+          <Skeleton class="h-4 w-full" />
+          <Skeleton class="h-4 w-2/3" />
+        </Card>
+      </div>
+
+      <template x-if="error">
+        <Alert tone="danger" class="mt-6"><span x-text="error"></span></Alert>
+      </template>
+
+      <div x-show="!loading && !error && !msg" x-cloak class="mt-6">
+        <Card>
+          <EmptyState
+            icon="mail-question"
+            title="This message is not here"
+            description="It may have been deleted for good, or it belongs to another account."
+          >
+            <Button href="/inbox/" variant="outline" icon="inbox">Go to inbox</Button>
+          </EmptyState>
+        </Card>
+      </div>
+
+      <template x-if="!loading && msg">
+        <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+          <article class="min-w-0 rounded-xl border bg-surface p-6 shadow-sm md:p-8">
+            <div class="flex flex-wrap items-center gap-2">
+              <template x-if="msg.folder === 'trash'">
+                <Badge tone="neutral" dot>In trash</Badge>
+              </template>
+              <template x-if="msg.expired">
+                <Badge tone="warning">Expired</Badge>
+              </template>
+            </div>
+            <h1
+              class="mt-2 font-display text-2xl leading-tight font-semibold tracking-tight text-fg md:text-3xl"
+              x-text="subject"
+            >
+            </h1>
+
+            <div class="mt-5 flex items-center gap-3 border-b pb-5">
+              <AddressAvatar addressExpr="msg.from" size={40} />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-fg" x-text="nameOf(msg.from)"></p>
+                <p class="truncate text-xs text-fg-subtle">to <span x-text="nameOf(msg.to)"></span></p>
+              </div>
+              <time class="shrink-0 text-xs text-fg-subtle" x-text="when"></time>
+            </div>
+
+            <template x-if="msg.expired">
+              <Alert tone="warning" title="This message expired" class="mt-6">
+                Messages are kept for about two weeks before they are removed. This one was not picked up by your
+                mailbox in time, so its contents can no longer be read. Ask the sender to send it again.
+              </Alert>
+            </template>
+
+            <div
+              x-show="!msg.expired"
+              class="mt-6 text-[0.95rem] leading-relaxed whitespace-pre-wrap break-words text-fg"
+              x-text="msg.body || '(no text)'"
+            >
+            </div>
+          </article>
+
+          <aside class="space-y-3">
+            <Card>
+              <div class="flex flex-col gap-2">
+                <Button x-bind:href="replyHref" href="/compose/" icon="reply" block x-show="!msg.expired && canReply">
+                  Reply
+                </Button>
+                <Button variant="outline" icon="trash-2" block x-show="msg.folder !== 'trash'" x-on:click="trash()">
+                  Move to trash
+                </Button>
+                <Button variant="outline" icon="undo-2" block x-show="msg.folder === 'trash'" x-on:click="restore()">
+                  Restore
+                </Button>
+                <Button
+                  variant="ghost"
+                  icon="trash"
+                  block
+                  class="text-danger"
+                  x-show="msg.folder === 'trash'"
+                  x-bind:href="purgeHref"
+                  href="/purge/"
+                >
+                  Delete for good
+                </Button>
+              </div>
+            </Card>
+            <p class="flex items-start gap-2 px-1 text-xs text-fg-subtle">
+              <Icon name="lock" class="mt-0.5 size-3.5 shrink-0" />
+              Opened on this device with your key. Nobody else can read it.
+            </p>
+          </aside>
+        </div>
+      </template>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { readPage } from '../lib/pages/read.js';
+
+  Alpine.data('readPage', readPage);
+</script>

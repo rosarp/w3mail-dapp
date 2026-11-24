@@ -1,0 +1,90 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import PageHeader from '../components/sections/PageHeader.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Alert from '../components/ui/Alert.astro';
+import EmptyState from '../components/ui/EmptyState.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import Icon from '../components/ui/Icon.astro';
+---
+
+<Layout title="Drafts">
+  <MailShell>
+    <div x-data="draftsPage" class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <section class="min-w-0 animate-fade-in">
+        <PageHeader title="Drafts" description="Messages you started and have not sent. They stay on this device." />
+
+        <div class="mt-6 space-y-4">
+          <template x-if="error">
+            <Alert tone="danger"><span x-text="error"></span></Alert>
+          </template>
+
+          <div x-show="loading" class="divide-y overflow-hidden rounded-xl border bg-surface">
+            {
+              Array.from({ length: 4 }).map(() => (
+                <div class="space-y-2 px-4 py-4">
+                  <Skeleton class="h-3.5 w-1/3" />
+                  <Skeleton class="h-3 w-2/3" />
+                </div>
+              ))
+            }
+          </div>
+
+          <div x-show="!loading && !error && drafts.length === 0" x-cloak>
+            <Card>
+              <EmptyState icon="file-pen-line" title="No drafts" description="Anything you start writing is saved here until you send it.">
+                <Button href="/compose/?return=/drafts/" icon="pen-line">Write a message</Button>
+              </EmptyState>
+            </Card>
+          </div>
+
+          <ul x-show="!loading && drafts.length > 0" x-cloak class="divide-y overflow-hidden rounded-xl border bg-surface shadow-sm">
+            <template x-for="draft in drafts" :key="draft.id">
+              <li class="group relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-surface-2">
+                <a x-bind:href="openHref(draft)" class="absolute inset-0" x-bind:aria-label="'Edit ' + subjectOf(draft)"></a>
+                <span class="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-fg-subtle">
+                  <Icon name="file-pen-line" class="size-4" />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <p class="truncate text-sm font-medium text-fg" x-text="recipientOf(draft)"></p>
+                    <time class="shrink-0 text-xs text-fg-subtle" x-text="when(draft)"></time>
+                  </div>
+                  <p class="mt-0.5 truncate text-sm text-fg" x-text="subjectOf(draft)"></p>
+                  <p class="mt-0.5 truncate text-sm text-fg-subtle" x-text="snippet(draft)"></p>
+                </div>
+                <div class="relative z-10 shrink-0 self-center">
+                  <Button variant="ghost" size="sm" icon="trash-2" x-on:click="remove(draft)">Delete</Button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <aside class="space-y-4 lg:pt-2 animate-slide-in">
+        <Card>
+          <p class="text-xs font-medium tracking-wider text-fg-subtle uppercase">Drafts</p>
+          <p class="mt-2 font-display text-3xl font-semibold text-fg" x-text="loading ? '–' : drafts.length">–</p>
+          <p class="text-sm text-fg-muted">waiting to be sent</p>
+        </Card>
+        <div class="rounded-xl border border-dashed p-4">
+          <p class="flex items-center gap-2 text-sm font-medium text-fg">
+            <Icon name="smartphone" class="size-4 text-fg-subtle" />
+            Only on this device
+          </p>
+          <p class="mt-1 text-sm text-fg-muted">Drafts are never sent anywhere until you press Send.</p>
+        </div>
+      </aside>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { draftsPage } from '../lib/pages/drafts.js';
+
+  Alpine.data('draftsPage', draftsPage);
+</script>

@@ -1,0 +1,149 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MailShell from '../components/mail/MailShell.astro';
+import PageHeader from '../components/sections/PageHeader.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import Input from '../components/ui/Input.astro';
+import Textarea from '../components/ui/Textarea.astro';
+import Alert from '../components/ui/Alert.astro';
+import Icon from '../components/ui/Icon.astro';
+import Skeleton from '../components/ui/Skeleton.astro';
+import LogoSpinner from '../components/ui/LogoSpinner.astro';
+import AddressAvatar from '../components/ui/AddressAvatar.astro';
+import { MAX_BODY_LENGTH, MAX_SUBJECT_LENGTH } from '../lib/mailLimits.js';
+---
+
+<Layout title="Compose">
+  <MailShell compose={false}>
+    <div x-data="composePage" class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <section class="min-w-0 animate-fade-in">
+        <a x-bind:href="backHref" href="/sent/" class="inline-flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
+          <Icon name="chevron-left" class="size-4" />
+          Back
+        </a>
+        <PageHeader title="New message" class="mt-3" />
+
+        <div x-show="loading" class="mt-6">
+          <Card class="space-y-5">
+            <Skeleton class="h-10 w-full" />
+            <Skeleton class="h-10 w-full" />
+            <Skeleton class="h-48 w-full" />
+          </Card>
+        </div>
+
+        <form x-show="!loading" x-cloak class="mt-6" x-on:submit.prevent="send()" novalidate>
+          <Card>
+            <div class="space-y-5">
+              <div>
+                <Input
+                  label="To"
+                  name="to"
+                  placeholder="A Polkadot address"
+                  autocomplete="off"
+                  spellcheck="false"
+                  icon="at-sign"
+                  x-model.trim="form.to"
+                  x-on:blur="validate('to')"
+                  x-bind:disabled="sending"
+                  errorExpr="errors.to"
+                />
+                <div class="mt-2 flex flex-wrap items-center gap-2" x-show="contacts.length > 0">
+                  <label for="contact-pick" class="text-xs text-fg-subtle">or choose a contact</label>
+                  <select
+                    id="contact-pick"
+                    class="h-8 rounded-lg border bg-surface px-2 text-xs text-fg"
+                    x-model="picked"
+                    x-on:change="pickContact()"
+                    x-bind:disabled="sending"
+                  >
+                    <option value="">Contacts…</option>
+                    <template x-for="contact in contacts" :key="contact.id">
+                      <option x-bind:value="contact.address" x-text="contact.name"></option>
+                    </template>
+                  </select>
+                </div>
+                <div class="mt-2 flex items-center gap-2" x-show="recipient" x-cloak>
+                  <AddressAvatar addressExpr="recipient" size={20} />
+                  <span class="text-xs text-fg-muted" x-text="recipientLabel"></span>
+                </div>
+              </div>
+
+              <Input
+                label="Subject"
+                name="subject"
+                maxlength={MAX_SUBJECT_LENGTH}
+                x-model="form.subject"
+                x-bind:disabled="sending"
+                errorExpr="errors.subject"
+              />
+
+              <Textarea
+                label="Message"
+                name="body"
+                rows={12}
+                maxlength={MAX_BODY_LENGTH}
+                x-model="form.body"
+                x-on:blur="validate('body')"
+                x-bind:disabled="sending"
+                errorExpr="errors.body"
+              />
+            </div>
+
+            <div class="mt-6 space-y-4 border-t pt-5">
+              <template x-if="error">
+                <Alert tone="danger"><span x-text="error"></span></Alert>
+              </template>
+
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="text-xs text-fg-subtle" x-text="draftLabel"></p>
+                <div class="flex gap-2">
+                  <Button variant="ghost" icon="trash-2" x-on:click="discard()" x-bind:disabled="sending">
+                    Discard
+                  </Button>
+                  <Button type="submit" icon="send" loading="sending">Send</Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </form>
+      </section>
+
+      <aside class="space-y-4 lg:pt-14 animate-slide-in">
+        <Card>
+          <p class="text-sm font-medium text-fg">Sending</p>
+          <ol class="mt-4 space-y-3">
+            <template x-for="(item, index) in steps" :key="item.id">
+              <li class="flex items-center gap-3">
+                <span
+                  class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold"
+                  x-bind:class="stateOf(item.id) === 'done' ? 'bg-success-soft text-success' : stateOf(item.id) === 'active' ? 'bg-primary-soft text-primary' : 'bg-surface-2 text-fg-subtle'"
+                >
+                  <span x-show="stateOf(item.id) === 'done'"><Icon name="check" class="size-4" /></span>
+                  <span x-show="stateOf(item.id) === 'active'"><LogoSpinner size="sm" class="size-4" /></span>
+                  <span x-show="stateOf(item.id) === 'waiting'" x-text="index + 1"></span>
+                </span>
+                <div>
+                  <p class="text-sm text-fg" x-text="item.label"></p>
+                  <p class="text-xs text-fg-subtle" x-text="item.hint"></p>
+                </div>
+              </li>
+            </template>
+          </ol>
+        </Card>
+        <p class="flex items-start gap-2 px-1 text-xs text-fg-subtle">
+          <Icon name="lock" class="mt-0.5 size-3.5 shrink-0" />
+          Locked to the recipient on this device before it is sent. Kept for about two weeks until their mailbox
+          picks it up.
+        </p>
+      </aside>
+    </div>
+  </MailShell>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+  import { composePage } from '../lib/pages/compose.js';
+
+  Alpine.data('composePage', composePage);
+</script>

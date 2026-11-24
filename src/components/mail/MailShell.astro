@@ -1,0 +1,84 @@
+---
+import PageLayout from '../shell/PageLayout.astro';
+import MobileTabBar from '../ui/MobileTabBar.astro';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import AddressAvatar from '../ui/AddressAvatar.astro';
+import HostRequired from './HostRequired.astro';
+import { NAV, COMPOSE_HREF } from '../../lib/nav.js';
+
+/**
+ * The frame of every mail screen: the account and Compose bar, the folder strip on
+ * phones, the mobile tab bar, and the "Open in the Polkadot app" state outside a host.
+ *
+ * @typedef {object} Props
+ * @property {boolean} [compose]  Show the Compose button; default true.
+ * @property {boolean} [gate]  Replace the content with the "Open in the Polkadot app" state outside a host; default true.
+ * @property {string} [class]
+ */
+
+const { compose = true, gate = true, class: className } = Astro.props;
+const current = Astro.url.pathname;
+---
+
+<PageLayout class={className}>
+  <div x-data class="mb-6 flex items-center justify-between gap-4">
+    <div class="flex min-w-0 items-center gap-3" x-show="$store.wallet.isConnected" x-cloak>
+      <AddressAvatar addressExpr="$store.wallet.address" size={28} />
+      <p class="truncate text-sm text-fg-muted">
+        Signed in as <span class="font-medium text-fg" x-text="$store.wallet.displayName"></span>
+      </p>
+    </div>
+    <span x-show="!$store.wallet.isConnected"></span>
+    {
+      compose && (
+        <Button href={COMPOSE_HREF} icon="pen-line" class="hidden md:inline-flex">
+          Compose
+        </Button>
+      )
+    }
+  </div>
+
+  <nav aria-label="Folders" class="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 md:hidden">
+    {
+      NAV.map((item) => (
+        <a
+          href={item.href}
+          aria-current={current === item.href ? 'page' : undefined}
+          class:list={[
+            'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+            current === item.href ? 'border-primary bg-primary text-primary-fg' : 'bg-surface text-fg-muted hover:text-fg',
+          ]}
+        >
+          {item.icon && <Icon name={item.icon} class="size-3.5" />}
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    gate ? (
+      <div x-data>
+        <div x-show="$store.wallet.mode === 'host-required'" x-cloak>
+          <HostRequired />
+        </div>
+        <div x-show="$store.wallet.mode !== 'host-required'">
+          <slot />
+        </div>
+      </div>
+    ) : (
+      <slot />
+    )
+  }
+</PageLayout>
+
+<MobileTabBar
+  tabs={[
+    { href: '/inbox/', label: 'Inbox', icon: 'inbox' },
+    { href: '/sent/', label: 'Sent', icon: 'send' },
+    { href: '/contacts/', label: 'Contacts', icon: 'users' },
+    { href: '/settings/', label: 'Settings', icon: 'settings' },
+  ]}
+  centerAction={{ icon: 'pen-line', label: 'Compose', href: COMPOSE_HREF }}
+/>

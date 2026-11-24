@@ -1,0 +1,176 @@
+---
+import PageHeader from '../sections/PageHeader.astro';
+import Button from '../ui/Button.astro';
+import Card from '../ui/Card.astro';
+import Alert from '../ui/Alert.astro';
+import Badge from '../ui/Badge.astro';
+import EmptyState from '../ui/EmptyState.astro';
+import Skeleton from '../ui/Skeleton.astro';
+import Icon from '../ui/Icon.astro';
+import AddressAvatar from '../ui/AddressAvatar.astro';
+
+/**
+ * One mail folder: a dense list of messages beside a quiet summary panel. Behaviour is
+ * `mailFolder` in `lib/components/mailFolder.js`.
+ *
+ * @typedef {object} Props
+ * @property {'inbox' | 'sent' | 'trash'} folder
+ * @property {string} title
+ * @property {string} description
+ * @property {string} emptyTitle
+ * @property {string} emptyDescription
+ * @property {string} emptyIcon
+ */
+
+const { folder, title, description, emptyTitle, emptyDescription, emptyIcon } = Astro.props;
+const summary = {
+  inbox: 'Messages sealed to your key. Only this device can open them.',
+  sent: 'Your copies of what you sent. The recipient’s copy is sealed to them, so this device keeps yours.',
+  trash: 'Restore a message to put it back, or delete it for good to remove it from your mailbox.',
+}[folder];
+---
+
+<div x-data={`mailFolder('${folder}')`} class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem]">
+  <section class="min-w-0 animate-fade-in">
+    <PageHeader title={title} description={description}>
+      {
+        folder === 'inbox' && (
+          <Button variant="outline" icon="refresh-cw" loading="syncing" x-on:click="sync()">
+            Sync
+          </Button>
+        )
+      }
+    </PageHeader>
+
+    <div class="mt-6 space-y-4">
+      {
+        folder === 'inbox' && (
+          <template x-if="needsSetup">
+            <Alert tone="warning" title="Finish setting up your mailbox">
+              Others cannot write to you until your mailbox key is registered.
+              <a href="/" class="font-medium underline underline-offset-2">Set it up</a>
+            </Alert>
+          </template>
+        )
+      }
+
+      <template x-if="error">
+        <Alert tone="danger"><span x-text="error"></span></Alert>
+      </template>
+
+      <div x-show="loading" class="divide-y overflow-hidden rounded-xl border bg-surface" aria-busy="true">
+        {
+          Array.from({ length: 6 }).map(() => (
+            <div class="flex items-center gap-3 px-4 py-3.5">
+              <Skeleton class="size-9 shrink-0 rounded-full" />
+              <div class="flex-1 space-y-2">
+                <Skeleton class="h-3.5 w-1/3" />
+                <Skeleton class="h-3 w-2/3" />
+              </div>
+              <Skeleton class="h-3 w-10" />
+            </div>
+          ))
+        }
+      </div>
+
+      <div x-show="isEmpty && !error" x-cloak>
+        <Card>
+          <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription}>
+            {
+              folder === 'trash' ? (
+                <Button href="/inbox/" variant="outline" icon="inbox">
+                  Back to inbox
+                </Button>
+              ) : (
+                <Button href={`/compose/?return=/${folder}/`} icon="pen-line">
+                  Write a message
+                </Button>
+              )
+            }
+          </EmptyState>
+        </Card>
+      </div>
+
+      <ul x-show="!loading && items.length > 0" x-cloak class="divide-y overflow-hidden rounded-xl border bg-surface shadow-sm">
+        <template x-for="item in items" :key="item.key">
+          <li
+            class="group relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-surface-2"
+            x-bind:class="item.expired ? 'opacity-60' : ''"
+          >
+            <a x-bind:href="readHref(item)" class="absolute inset-0" x-bind:aria-label="'Open ' + subjectOf(item)"></a>
+            <span class="relative mt-1 flex w-2 shrink-0 justify-center">
+              <span x-show="isUnread(item)" class="size-2 rounded-full bg-primary" aria-label="Unread"></span>
+            </span>
+            <AddressAvatar addressExpr="counterpart(item)" size={36} class="shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-baseline justify-between gap-3">
+                <p
+                  class="truncate text-sm"
+                  x-bind:class="isUnread(item) ? 'font-semibold text-fg' : 'font-medium text-fg-muted'"
+                  x-text="nameFor(item)"
+                >
+                </p>
+                <time class="shrink-0 text-xs text-fg-subtle" x-text="when(item)"></time>
+              </div>
+              <div class="mt-0.5 flex items-center gap-2">
+                <template x-if="item.expired">
+                  <Badge tone="neutral">Expired</Badge>
+                </template>
+                <p
+                  class="truncate text-sm"
+                  x-bind:class="isUnread(item) ? 'font-semibold text-fg' : 'text-fg'"
+                  x-text="subjectOf(item)"
+                >
+                </p>
+              </div>
+              <p class="mt-0.5 truncate text-sm text-fg-subtle" x-text="snippet(item)"></p>
+            </div>
+            {
+              folder === 'trash' ? (
+                <div class="relative z-10 flex shrink-0 flex-col gap-1 sm:flex-row sm:items-center">
+                  <Button variant="ghost" size="sm" icon="undo-2" x-on:click="restore(item)">
+                    Restore
+                  </Button>
+                  <Button variant="ghost" size="sm" icon="trash-2" class="text-danger" x-bind:href="purgeHref(item)" href="/purge/">
+                    Delete for good
+                  </Button>
+                </div>
+              ) : (
+                <div class="relative z-10 hidden shrink-0 self-center group-hover:flex">
+                  <Button variant="ghost" size="icon-sm" aria-label="Move to trash" x-on:click="trash(item)">
+                    <Icon name="trash-2" class="size-4" />
+                  </Button>
+                </div>
+              )
+            }
+          </li>
+        </template>
+      </ul>
+    </div>
+  </section>
+
+  <aside class="space-y-4 lg:pt-2 animate-slide-in">
+    <Card>
+      <p class="text-xs font-medium tracking-wider text-fg-subtle uppercase">{title}</p>
+      <p class="mt-2 font-display text-3xl font-semibold text-fg" x-text="loading ? '–' : items.length">–</p>
+      <p class="text-sm text-fg-muted">
+        {folder === 'inbox' ? <span x-text="unreadCount + ' unread'" /> : 'messages'}
+      </p>
+      {
+        folder === 'inbox' && (
+          <p class="mt-4 flex items-center gap-2 text-xs text-fg-subtle">
+            <Icon name="clock" class="size-3.5" />
+            <span x-text="lastSyncedLabel">Not synced yet</span>
+          </p>
+        )
+      }
+    </Card>
+    <div class="rounded-xl border border-dashed p-4">
+      <p class="flex items-center gap-2 text-sm font-medium text-fg">
+        <Icon name="lock" class="size-4 text-fg-subtle" />
+        Private by design
+      </p>
+      <p class="mt-1 text-sm text-fg-muted">{summary}</p>
+    </div>
+  </aside>
+</div>

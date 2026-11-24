@@ -9,4 +9,14 @@
  *
  * @type {NavItem[]}
  */
-export const NAV = [];
+export const NAV = [
+  { href: '/inbox/', label: 'Inbox', icon: 'inbox' },
+  { href: '/sent/', label: 'Sent', icon: 'send' },
+  { href: '/drafts/', label: 'Drafts', icon: 'file-pen-line' },
+  { href: '/trash/', label: 'Trash', icon: 'trash-2' },
+  { href: '/contacts/', label: 'Contacts', icon: 'users' },
+  { href: '/settings/', label: 'Settings', icon: 'settings' },
+];
+
+/** The compose page, reachable from every screen. */
+export const COMPOSE_HREF = '/compose/';

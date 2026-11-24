@@ -26,7 +26,9 @@ them on these modules rather than copying.
 ## Send
 1. Resolve the recipient (contact or typed address) to H160.
 2. `hasPubKey(recipient)`. If false, stop with "This address hasn't set up w3mail yet."
-3. `fetchPubKey(recipient)`, then `sealJson(message, recipientKey, 'w3mail:v1')`.
+3. `fetchPubKey(recipient)`. The contract accepts keys of 1 to 64 bytes, so refuse one
+   that is not exactly 32 bytes with "This address's mail key is invalid; they need to set
+   up w3mail again." Then `sealJson(message, recipientKey, 'w3mail:v1')`.
 4. `uploadBytes(sealed)`, then `sendMessage(recipient, cidToBytes32(cid), msgId)`.
 5. Put a `sent` record with the plaintext: the sender cannot decrypt the sealed copy, so
    the device's record is the only readable copy of sent mail. Delete the draft it came from.
@@ -37,7 +39,11 @@ them on these modules rather than copying.
    another origin, and its mailbox would be the wrong one.
 2. `getActiveInboxCount(me)`; if it differs from the local inbox count, page through
    `getInboxPage(offset, 50)` from `meta.inboxSynced`.
-3. For each entry whose `msgId` is not stored and not `deleted`:
+3. msgIds are not unique on chain: any sender can reuse one. Sync never overwrites a
+   stored record. An entry whose `msgId` is already stored from the same sender is
+   skipped; one from a different sender is stored under the key `<sender>:<msgId>`, and
+   purge passes that entry's on-chain `msgId`.
+   For each entry not yet stored and not `deleted`:
    `fetchBytes(bytes32ToCid(messageCid))`, `openJson(bytes, secretKey, 'w3mail:v1')`, put
    it in `inbox` unread. Show the on-chain `sender` as the sender, not the blob's `from`.
 4. "This content is not available on Bulletin" or "This message cannot be decrypted"
