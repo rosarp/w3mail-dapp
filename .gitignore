@@ -23,5 +23,10 @@ pnpm-debug.log*
 # Workflow files stay local until the user opts in.
 .github/workflows/
 
-# Scratch trees the engine retries a phase in.
-.dapp-factory/worktrees/
+coverage/
+test-results/
+
+# Engine state is local to this machine: prompts, the task ledger, the checkpoint and
+# the run lock name local paths. Handoffs are the build's record and are kept.
+.dapp-factory/*
+!.dapp-factory/handoffs/

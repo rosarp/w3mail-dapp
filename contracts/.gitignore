@@ -4,3 +4,8 @@ cache/
 typechain-types/
 .env
 deployments/
+coverage/
+coverage.json
+
+# The local chain starts fresh every time, so its upgrades record is always stale.
+.openzeppelin/unknown-420420421.json
