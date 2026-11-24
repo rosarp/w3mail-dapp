@@ -9,7 +9,16 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run",
-    "astro": "astro"
+    "astro": "astro",
+    "postinstall": "papi generate",
+    "papi": "papi generate",
+    "chain:up": "dapp-factory chain up",
+    "chain:down": "dapp-factory chain down",
+    "chain:status": "dapp-factory chain status",
+    "deploy": "dapp-factory deploy w3mail-dapp",
+    "network:local": "dapp-factory network w3mail-dapp local",
+    "network:paseo": "dapp-factory network w3mail-dapp paseo",
+    "local": "dapp-factory chain up && dapp-factory network w3mail-dapp local && dapp-factory deploy w3mail-dapp"
   },
   "dependencies": {
     "@astrojs/alpinejs": "^1.0.0",

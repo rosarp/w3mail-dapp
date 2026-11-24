@@ -149,18 +149,18 @@ Never hardcode a chain, a descriptor or an address: read `SITE.chain`, `chainDes
 and `src/lib/contracts/config.js`.
 
 When `SITE.chain` is `local` the app runs against the development chain `dapp-factory
-chain up` starts, typed by the generated `@polkadot-api/descriptors` in `.papi/` (never
-edit or regenerate it). The phone cannot sign for that chain, so `$store.wallet` acts as a
-dev account (`mode: 'dev'`, Alice by default) chosen on `/wallet/dev-account/`, and contract
+chain up` starts, typed by `@polkadot-api/descriptors`, which `bun install` (or `bun run
+papi`) generates into `.papi/descriptors/dist/` from `.papi/metadata/local.scale` (never
+edit either). The phone cannot sign for that chain, so `$store.wallet` acts as a dev
+account (`mode: 'dev'`, Alice by default) chosen on `/wallet/dev-account/`, and contract
 writes skip the gas allowance; the account is mapped on its first write. Bulletin uploads
 and live messages stay on Paseo under the product account. To try it:
 
-1. `dapp-factory chain up`;
+1. `bun run local` (chain:up, network:local and deploy);
 2. in Desktop, Settings → Development → Custom chains, add `ws://localhost:9955`. Desktop
    records the chain's genesis when it is added: if that URL was added for another chain,
    remove it and add it again, or every call fails with `ChainNotSupportedError`;
-3. `dapp-factory deploy <name>`;
-4. open `dapp-factory preview <name>`'s URL in Desktop and pick a dev account from the
+3. open `dapp-factory preview <name>`'s URL in Desktop and pick a dev account from the
    header chip.
 
 A dev account is a test identity: never offer one, or link `/wallet/dev-account/`, on `paseo`.
