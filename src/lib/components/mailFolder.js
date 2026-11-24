@@ -50,7 +50,7 @@ export function mailFolder(folder) {
       this.checkSetup();
       if (!isMailServiceReady() || isDesignPreview()) return;
       this.sync(true);
-      this.stopBlocks = onBlock(() => this.sync(true), { minIntervalMs: 20000 });
+      this.stopBlocks = onBlock(() => this.sync(true), { minIntervalMs: 72000 });
     },
 
     destroy() {

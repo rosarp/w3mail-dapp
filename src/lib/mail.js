@@ -7,6 +7,7 @@ import { uploadBytes, fetchBytes, cidToBytes32, bytes32ToCid } from './bulletin.
 import { deriveKeyPair } from './crypto/keys.js';
 import { sealJson, openJson } from './crypto/seal.js';
 import { ensureBulletinAllowance } from './host/allowances.js';
+import { isAccountMapped } from './chain.js';
 import { isDesignPreview, previewFallback } from './preview.js';
 import { txStore, walletStore } from './stores.js';
 import { mailbox, parseAddress, readState, writeState, uuidv7 } from './mailbox.js';
@@ -29,7 +30,8 @@ import { mailbox, parseAddress, readState, writeState, uuidv7 } from './mailbox.
  */
 
 const SEAL_INFO = 'w3mail:v1';
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 50;
+const KEY_LENGTH = 32;
 const RETENTION_MS = 13 * 86400000;
 
 /** @type {ReturnType<typeof createContract> | null} */
@@ -115,7 +117,11 @@ async function recipientKey(recipient) {
   if (!has) {
     throw new Error("This address hasn't set up w3mail yet. Ask them to open w3mail once, then send again.");
   }
-  return bytesOf(await registry().read('fetchPubKey', [recipient]));
+  const key = bytesOf(await registry().read('fetchPubKey', [recipient]));
+  if (key.length !== KEY_LENGTH) {
+    throw new Error("This address's mail key is invalid; they need to set up w3mail again.");
+  }
+  return key;
 }
 
 /**
@@ -177,15 +183,16 @@ const isGone = (err) => err instanceof Error && /not available on Bulletin/i.tes
  *
  * @param {any} entry
  * @param {Uint8Array} secretKey
+ * @param {string} key  The local record key.
  * @returns {Promise<MailRecord | null>}
  */
-async function inboxRecord(entry, secretKey) {
+async function inboxRecord(entry, secretKey, key) {
   if (entry.deleted) return null;
   const cid = bytes32ToCid(hexOf(entry.messageCid));
   const timestamp = Number(entry.timestamp) * 1000;
   /** @type {MailRecord} */
   const base = {
-    key: String(entry.msgId),
+    key,
     msgId: String(entry.msgId),
     folder: 'inbox',
     from: lower(entry.sender),
@@ -221,15 +228,59 @@ async function inboxRecord(entry, secretKey) {
 }
 
 /**
+ * The local key an inbox entry is stored under, or null when it is already stored.
+ * msgIds are chosen by senders, so one reused by a different sender is kept apart.
+ *
+ * @param {ReturnType<typeof mailbox>} box
+ * @param {any} entry
+ * @returns {Promise<string | null>}
+ */
+async function inboxKey(box, entry) {
+  const msgId = String(entry.msgId);
+  const sender = lower(entry.sender);
+  const existing = await box.mail.get(msgId);
+  if (!existing) return msgId;
+  if (lower(existing.from) === sender) return null;
+  const separate = `${sender}:${msgId}`;
+  return (await box.mail.get(separate)) ? null : separate;
+}
+
+/** @param {MailRecord} m */
+const isReceived = (m) => (m.previousFolder ?? m.folder) === 'inbox';
+
+/** @type {Promise<{ added: number }> | null} */
+let syncInFlight = null;
+
+/**
  * Fetch, decrypt and keep every inbox entry this device has not seen yet. Progress is
- * saved per entry, so an interrupted sync resumes where it stopped.
+ * saved per entry, so an interrupted sync resumes where it stopped. Only one sync runs
+ * at a time; a second call joins the one in flight. Nothing is read until the account
+ * is mapped, since an unmapped read would answer for another mailbox.
  *
  * @param {string} h160
  * @returns {Promise<{ added: number }>}
  */
-export async function syncInbox(h160) {
+export function syncInbox(h160) {
+  syncInFlight ??= runSync(h160).finally(() => {
+    syncInFlight = null;
+  });
+  return syncInFlight;
+}
+
+/** @param {string} h160 */
+async function runSync(h160) {
   if (!isMailServiceReady() || isDesignPreview()) return { added: 0 };
+  const address = walletStore()?.address;
+  if (!address || !(await isAccountMapped(address))) return { added: 0 };
+
   const box = mailbox(h160);
+  const active = Number((await router().read('getActiveInboxCount', [h160])) ?? 0);
+  const local = (await box.mail.all()).filter(isReceived).length;
+  if (active === local) {
+    await writeState(h160, { lastSyncedAt: Date.now() });
+    return { added: 0 };
+  }
+
   const { secretKey } = await mailboxKey(h160);
   let offset = (await readState(h160)).inboxSynced;
   let added = 0;
@@ -240,8 +291,9 @@ export async function syncInbox(h160) {
     const total = Number(result?.total ?? 0);
     if (page.length === 0) break;
     for (const entry of page) {
-      const record = await inboxRecord(entry, secretKey);
-      if (record && !(await box.mail.get(record.key))) {
+      const key = entry.deleted ? null : await inboxKey(box, entry);
+      const record = key ? await inboxRecord(entry, secretKey, key) : null;
+      if (record) {
         await box.mail.put(record.key, record);
         added++;
       }
@@ -409,7 +461,8 @@ export async function requestStorageAllowance() {
 /** @type {[RegExp, string][]} */
 const PLAIN_ERRORS = [
   [/no public key/i, "This address hasn't set up w3mail yet. Ask them to open w3mail once, then send again."],
-  [/inbox full/i, "This person's mailbox is full. Try again later."],
+  [/inbox full/i, 'Their inbox is full.'],
+  [/bad msgid|empty cid/i, 'The message could not be prepared. Try sending it again.'],
   [/zero receiver/i, 'Enter a valid address.'],
   [/cancel|reject/i, 'You cancelled. Nothing was changed.'],
   [/not enough|insufficient/i, 'Your account does not have enough funds for this. Top it up, then try again.'],

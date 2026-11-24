@@ -31,7 +31,7 @@ export function homePage() {
         return;
       }
       await this.refresh();
-      this.stopBlocks = onBlock(() => this.tick(), { minIntervalMs: 30000 });
+      this.stopBlocks = onBlock(() => this.tick(), { minIntervalMs: 72000 });
     },
 
     destroy() {
