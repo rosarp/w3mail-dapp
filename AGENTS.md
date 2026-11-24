@@ -11,8 +11,9 @@ project as a contract to honour, not to rewrite.
 
 ## Chain & Network
 
-- **Target chain**: Paseo Asset Hub (Polkadot Hub TestNet). **Chain ID** `420420417` —
-  a constant; never substitute another value.
+- **Target chain**: Paseo Asset Hub (Polkadot Hub TestNet), **chain ID** `420420417`; or,
+  when `SITE.chain` is `local`, the local development chain (see **Local network**),
+  chain ID `420420421`. Never substitute another value.
 - **Never deploy to or connect to** Moonbase, Moonbeam, Westend, Polkadot mainnet,
   Ethereum or any other chain.
 - **Contract execution**: PolkaVM via the Revive pallet. Solidity runs through Revive's
@@ -129,8 +130,9 @@ getters on the data object.
 ### Solidity + Hardhat (Revive EVM mode)
 
 - Build: `cd contracts && npm install && npx hardhat compile`.
-- Deploy: `cd contracts && npx hardhat run scripts/deploy-wrapper.js --network paseo`.
-- `contracts/hardhat.config.js` MUST use chainId `420420417` and Paseo endpoints.
+- Deploy: the engine runs `scripts/deploy-wrapper.js` on the spec's network after CONTRACTS, and `dapp-factory deploy <name>` runs it again.
+- `contracts/hardhat.config.js` defines the `paseo` (chainId `420420417`) and `local`
+  (chainId `420420421`) networks; the engine deploys to the spec's network.
 - The frontend uses `createContract` over `@parity/product-sdk-contracts` (PAPI `ReviveApi`),
   not `contractsApi`, ethers or a viem client.
 
@@ -141,20 +143,27 @@ getters on the data object.
 
 ## Local network
 
+Every project carries both networks; `SITE.chain` (from `PUBLIC_CHAIN` in `.env`, which
+the factory writes) picks one, and `dapp-factory network <name> local|paseo` switches it.
+Never hardcode a chain, a descriptor or an address: read `SITE.chain`, `chainDescriptor()`
+and `src/lib/contracts/config.js`.
+
 When `SITE.chain` is `local` the app runs against the development chain `dapp-factory
 chain up` starts, typed by the generated `@polkadot-api/descriptors` in `.papi/` (never
 edit or regenerate it). The phone cannot sign for that chain, so `$store.wallet` acts as a
-dev account (`mode: 'dev'`, Alice by default) chosen on `/dev-account/`, and contract
+dev account (`mode: 'dev'`, Alice by default) chosen on `/wallet/dev-account/`, and contract
 writes skip the gas allowance; the account is mapped on its first write. Bulletin uploads
 and live messages stay on Paseo under the product account. To try it:
 
 1. `dapp-factory chain up`;
-2. in Desktop, Settings → Development → Custom chains, add `ws://localhost:9955`;
+2. in Desktop, Settings → Development → Custom chains, add `ws://localhost:9955`. Desktop
+   records the chain's genesis when it is added: if that URL was added for another chain,
+   remove it and add it again, or every call fails with `ChainNotSupportedError`;
 3. `dapp-factory deploy <name>`;
 4. open `dapp-factory preview <name>`'s URL in Desktop and pick a dev account from the
    header chip.
 
-A dev account is a test identity: never offer one, or link `/dev-account/`, on `paseo`.
+A dev account is a test identity: never offer one, or link `/wallet/dev-account/`, on `paseo`.
 
 ## Product id
 
@@ -224,6 +233,16 @@ plugins or capabilities to `src-tauri/` unless the spec asks for a native featur
 - ❌ Modal dialogs — a veil over the page that blocks it. Use a page.
 - ❌ Re-installing dependencies already in `package.json`.
 
+## Commits
+
+- Commit your work as you finish each feature or module, one commit per feature or
+  module: `Add inbox page and mail list`, `Add mail domain module`.
+- Stage only the files you changed, by path. Never `git add -A` or `git commit -a`:
+  another phase may be writing the same tree.
+- Subject only: short, imperative, meaningful. No `prefix:` (`feat:`, `df:`, `fix:`), no
+  body unless the change cannot be understood without one.
+- Never add `Co-Authored-By`, `Generated with` or any other attribution trailer.
+
 ## Tool usage
 
 - Read before you write; prefer editing to rewriting.
@@ -257,7 +276,7 @@ device's mailbox collections.
 - `/inbox/`, `/sent/`, `/trash/`: `MailFolder` lists driven by `Alpine.data('mailFolder')`.
 - `/drafts/`, `/compose/` (`?to=`, `?draft=`, reply), `/read/?msgId=<record key>`,
   `/purge/?msgId=` (delete for good), `/contacts/`, `/contacts/edit/`, `/settings/`.
-- `/dev-account/` and `/wallet/faucet/` come from the template (local chain only).
+- `/wallet/dev-account/` (local chain only) and `/wallet/faucet/` come from the template.
 
 **Domain modules** (`src/lib/`):
 
