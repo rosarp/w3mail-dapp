@@ -244,3 +244,59 @@ plugins or capabilities to `src-tauri/` unless the spec asks for a native featur
   this file is the truth for chain, contract and build rules.
 - Don't invent a pattern silently: record the gap in your handoff's `gotchas_for_next`
   and use the simplest implementation that satisfies the task.
+
+## This project
+
+w3mail: end-to-end encrypted mail. Sealed messages go to the Bulletin Chain; the
+`W3bMailRouter` contract indexes them per recipient; everything readable lives in the
+device's mailbox collections.
+
+**Pages** (`src/pages/`, behaviour in `src/lib/pages/*.js`, registered by each page):
+
+- `/` (`homePage`): mailbox setup (key registration when missing or changed), then counts.
+- `/inbox/`, `/sent/`, `/trash/`: `MailFolder` lists driven by `Alpine.data('mailFolder')`.
+- `/drafts/`, `/compose/` (`?to=`, `?draft=`, reply), `/read/?msgId=<record key>`,
+  `/purge/?msgId=` (delete for good), `/contacts/`, `/contacts/edit/`, `/settings/`.
+- `/dev-account/` and `/wallet/faucet/` come from the template (local chain only).
+
+**Domain modules** (`src/lib/`):
+
+- `mail.js`: `isMailServiceReady`, `mailboxKey`, `keyStatus`, `registerKey`, `sendMail`,
+  `syncInbox`, `listFolder`, `folderCounts`, `getMessage`, `markRead`, `moveToTrash`,
+  `restoreMessage`, `purgeMessage`, `hasStorageAllowance`, `requestStorageAllowance`,
+  `mailErrorMessage`, `trackMail`.
+- `mailbox.js`: `mailbox(h160)` (collections `mail`/`drafts`/`contacts`/`meta` per account),
+  `currentAccount`, `readState`, `writeState`, `parseAddress`, `shortAddress`, `uuidv7`,
+  `returnTo`, `mailTime`, `fullTime`.
+- `drafts.js`: `listDrafts`, `getDraft`, `saveDraft`, `deleteDraft`.
+- `contacts.js`: `listContacts`, `getContact`, `contactNames`, `validateContact`,
+  `saveContact`, `removeContact`.
+- `flash.js`: `flash(toast)` shows a toast after the next navigation.
+- `mailLimits.js`: `MAX_BODY_LENGTH`, `MAX_SUBJECT_LENGTH`.
+
+**Stores**: `Alpine.store('flash')` between the `domain-stores` markers.
+
+**Contract calls**: `PubKeyRegistry.hasPubKey`, `fetchPubKey`, `registerPubKey`;
+`W3bMailRouter.sendMessage`, `getActiveInboxCount`, `getInboxPage`, `deleteMessages`.
+
+**Things that trip newcomers**:
+
+- `getInboxPage` answers for `msg.sender`, so `syncInbox` passes `{ origin }` and reads
+  nothing until the account is mapped. It returns `{ page, total }`.
+- Sync progress is `meta.state.inboxSynced` (an on-chain offset), saved per entry. A
+  Bulletin fetch failure is retried unless the entry is older than 13 days; an
+  undecryptable blob is stored as expired.
+- Record keys: inbox copies use the `msgId`; a sent copy of a note to self uses
+  `<msgId>:sent`; a msgId reused by another sender is `<sender>:<msgId>`.
+- Only received messages are deleted on chain; sent copies exist only on this device.
+- `.astro` frontmatter runs in Node at build time: never import a module that reaches
+  `alpinejs` there (use `mailLimits.js`, `site.js`).
+- The UI never says transaction, CID or gas: status goes through `trackMail`, not
+  `$store.tx.track`.
+- `src/lib/contracts/config.js` reads `import.meta.env`, so Node scripts take addresses
+  from `contracts/deployments/latest.json`.
+- `scripts/e2e-roundtrip.js` registers deterministic test keys for the Alice and Bob
+  dev accounts; in the app those accounts then show "key changed" and ask to set up again.
+- Tests: `src/lib/mail.test.js` mocks `contracts.js`, `bulletin.js`, `crypto/keys.js`,
+  `chain.js` and `stores.js` with a small in-memory chain, and uses the real `seal.js` and
+  in-memory `store.js`. `vitest.config.js` limits Vitest to `src/**/*.test.js`.
