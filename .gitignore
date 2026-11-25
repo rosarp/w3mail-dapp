@@ -1,4 +1,5 @@
 dist/
+.papi/descriptors/dist/
 .astro/
 node_modules/
 
@@ -26,10 +27,8 @@ pnpm-debug.log*
 coverage/
 test-results/
 
-# Engine state is local to this machine: prompts, the task ledger, the checkpoint and
-# the run lock name local paths. Handoffs are the build's record and are kept.
-.dapp-factory/*
-!.dapp-factory/handoffs/
+# Engine state is local to this machine and names local paths.
+.dapp-factory/
 
 # Publish output
 dist.car
